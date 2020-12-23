@@ -1,6 +1,5 @@
 ####################################################################################################################################
-# gtools.sh
-# gluques Tools - v.1.0 2020
+# eTtools - eSocial Tools v.1.0 2020
 #
 # Created by gluques
 # Barcelona, November 20, 2020.
@@ -21,7 +20,7 @@ SECOND=`date +%S`
 # ------------------------------------------------------------------------------------------
 # Paths:
 base_root_path="C:/gluques"
-base_gtools_path="$base_root_path/srcown/esfds-eSocial/gtools"
+base_gtools_path="$base_root_path/srcown/esfds-eSocial/etools"
 base_artifacts_path="$base_root_path/src"
 yml_local_jpa_bck_file="$base_gtools_path/bckyml/application-local_jpa.yml"
 yml_local_jpa_restore_path="$base_artifacts_path/esocial-jpa-repositories/src/main/resources/application-local.yml"
@@ -122,9 +121,9 @@ function restoreAppLocalFiles() {
 # Script Show Help:
 # ----------------------------------------------
 function showHelp() {
-    echo -e "$PROMPT gTools Help:"
+    echo -e "$PROMPT eTools Help:"
     echo
-    printf " Usage: gtools [OPTION]\n"
+    printf " Usage: etools [OPTION]\n"
     printf " Options:\n"    
     printf "\t-av\t\tShow artifacts version.\n"    
     echo
@@ -139,7 +138,7 @@ function showHelp() {
 # ------------------------------------------------------------------------------------------
 # Script main
 # ------------------------------------------------------------------------------------------
-echo -e "$fg_light_blue_color$PROMPT gTools v.1.0 2020 by gluques";
+echo -e "$fg_light_blue_color$PROMPT eTools v.1.0 2020 by gluques";
 if [[ $# == 1 ]]
 then
     case $@ in 
