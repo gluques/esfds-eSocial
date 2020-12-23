@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------------------------
---	PAYROLL PERFORMANCE INFORMATION - gPPI v.3.1 release 20200904												   --	
+--	PAYROLL PERFORMANCE INFORMATION - gPPI v.3.2 release 20200907												   --	
 --  						  																					   --	
 --																						   						   --	
 --  Created by Gregorio Luque Serrano for DXC.	   								   		   © eSocial DXC Software  --
@@ -44,7 +44,7 @@ DECLARE
     cur_Activitat CURSOR(p_idDret INTEGER) FOR
 		SELECT * FROM eco_activitat WHERE dret_id = p_idDret ORDER BY moviment_id, data_efecte_inicial, id;        
     cur_ActivitatDetall CURSOR(p_idNomina INTEGER) FOR
-		SELECT * FROM eco_activitat_detall WHERE nomina_id = p_idNomina ORDER BY nomina_mensual_id, activitat_id, data_efecte, id;        
+		SELECT * FROM eco_activitat_detall WHERE nomina_id = p_idNomina ORDER BY data_efecte, activitat_id, id;   
     cur_DretTeoric CURSOR(p_idDret INTEGER) FOR
 		SELECT * FROM eco_dret_teoric WHERE dret_id = p_idDret ORDER BY data_efecte, id;
     cur_DretTeoricDetall CURSOR(p_idDret INTEGER) FOR
@@ -114,7 +114,7 @@ BEGIN
     SELECT epr.persona_id, epr.numero_expedient INTO personaId, numeroExpedient FROM expedient_prestacio epr WHERE id = expedientPrestacioId;
     SELECT dre.nomina_id INTO nominaId FROM eco_dret dre WHERE id = dretId;
     RAISE NOTICE '----------------------------------------------------------------------------------------------------------------------------';
-	RAISE NOTICE ' Script eSocial gPPI v.3.1 release 20200904';
+	RAISE NOTICE ' Script eSocial gPPI v.3.2 release 20200907';
     RAISE NOTICE '';
     RAISE NOTICE ' Payroll Performance Information created by gluques.';    
     RAISE NOTICE ' (c) 2020 - eSocial DXC Software.';
@@ -374,11 +374,11 @@ BEGIN
                 IF (mostrarNomsColumnes) THEN
                     RAISE NOTICE 'Activitat:';
                     RAISE NOTICE '';
-                    RAISE NOTICE '  Id      Moviment  Data Inici           Data Fi              Quantitat  Estat  Arxivat  Modalitat'; 
-                    RAISE NOTICE '  ------  --------  -------------------  -------------------  ---------  -----  -------  ---------';
+                    RAISE NOTICE '  Id      Moviment  Data Inici           Data Fi              Quantitat  Estat  Arxivat  Modalitat  Liquidació'; 
+                    RAISE NOTICE '  ------  --------  -------------------  -------------------  ---------  -----  -------  ---------  ----------';
                     mostrarNomsColumnes := FALSE;
                 END IF;
-                RAISE NOTICE '  %  %  %  %  %  %  %  %', 
+                RAISE NOTICE '  %  %  %  %  %  %  %  %  %', 
                              RPAD(TO_CHAR(regActivitat.id, 'fm9999999'), 6, ' '), 
                              RPAD(TO_CHAR(regActivitat.moviment_id, 'fm999999'), 8, ' '),                             
                              TO_CHAR(regActivitat.data_efecte_inicial, 'DD-MM-YYYY HH24:MI:SS'),
@@ -388,7 +388,8 @@ BEGIN
                              LPAD(regActivitat.estat_activitat, 1, ' '),
                              CASE WHEN regActivitat.arxivat THEN LPAD('TRUE', 8, ' ') ELSE LPAD('FALSE', 9, ' ') END,
                              CASE WHEN regActivitat.arxivat THEN LPAD(TO_CHAR(regActivitat.pagament_modalitat_id, 'fm9999999'), 4, ' ') 
-                                ELSE LPAD(TO_CHAR(regActivitat.pagament_modalitat_id, 'fm9999999'), 3, ' ') END;
+                                ELSE LPAD(TO_CHAR(regActivitat.pagament_modalitat_id, 'fm9999999'), 3, ' ') END,                             
+                             CASE WHEN regActivitat.liquidacio THEN LPAD('TRUE', 12, ' ') ELSE LPAD('FALSE', 13, ' ') END;
                 numTotalRegistres := numTotalRegistres + 1;
             END LOOP;
             CLOSE cur_Activitat;
