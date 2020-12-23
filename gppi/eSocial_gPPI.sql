@@ -1,18 +1,28 @@
 ---------------------------------------------------------------------------------------------------------------------
---	PAYROLL PERFORMANCE INFORMATION - gPPI v.3.2 release 20200907												   --	
+--  eSocial_gPayroll_Performance_v4_0.sql                                                                          --
+--	Payroll Performance Information - gPPI v.4.0 release 20200921												   --	
 --  						  																					   --	
 --																						   						   --	
---  Created by Gregorio Luque Serrano for DXC.	   								   		   © eSocial DXC Software  --
+--  Created by Gregorio Luque Serrano.      	   								   		   © eSocial DXC Software  --
 --  Barcelona, July 10, 2020.	   												   		   █║▌│█│║▌║││█║▌║▌║█║▌│█  --
 ---------------------------------------------------------------------------------------------------------------------
 SET SCHEMA 'esocial';
 SET search_path TO esocial;
 DO $$
 DECLARE
-    -- Configurable parameters -------------------
+    -------------------------------------------------------------------------------
+    -- Configurable parameters:
+    -------------------------------------------------------------------------------
     prestacioId INTEGER := 613;                 -- Ex. 613;
     dretId INTEGER := NULL;                     -- Ex. 172;
 	numeroExpedient TEXT := NULL;  				-- Ex. '00006/2020/1003';
+    mostrarInformaciSituacio BOOLEAN := TRUE;
+    mostratInformaciSituacioDret BOOLEAN := TRUE;
+    mostratInformaciSituacioNomina BOOLEAN := TRUE;
+    mostratInformaciSituacioPersona BOOLEAN := TRUE;
+    mostratInformaciSituacioNominaMensual BOOLEAN := TRUE;
+    mostrarResumImportsTaules BOOLEAN := TRUE;
+    mostrarDadesTaules BOOLEAN := TRUE;
     mostrarPrestacioReserva BOOLEAN := TRUE;
     mostrarDretReserva BOOLEAN := TRUE;
     mostrarMoviment BOOLEAN := TRUE;
@@ -29,8 +39,10 @@ DECLARE
     mostrarPercebutDetall BOOLEAN := TRUE;
     mostrarOrdenacioPagament BOOLEAN := TRUE;
     mostrarOrdenacioPagamentDetall BOOLEAN := TRUE;
-    mostrarOrdenacioLiquidat BOOLEAN := TRUE;    
-    ----------------------------------------------        
+    mostrarLiquidat BOOLEAN := TRUE;    
+    -------------------------------------------------------------------------------
+    -- Cursor variables:
+    -------------------------------------------------------------------------------
     cur_PrestacioReserva CURSOR(p_idPrestacio INTEGER) FOR
 		SELECT * FROM eco_prestacio_reserva WHERE prestacio_id = p_idPrestacio ORDER BY data_reserva, id;    
     cur_DretReserva CURSOR(p_idDret INTEGER) FOR
@@ -63,7 +75,10 @@ DECLARE
 		SELECT * FROM eco_ordenacio_pagament_detall WHERE nomina_id = p_idNomina ORDER BY nomina_mensual_id, id;
     cur_Liquidat CURSOR(p_idNomina INTEGER) FOR
 		SELECT * FROM eco_liquidat WHERE ordenacio_pagament_id IN (SELECT id FROM eco_ordenacio_pagament WHERE nomina_id = p_idNomina)
-        ORDER BY ordenacio_pagament_id, data_efecte, data_periode, id;    
+        ORDER BY ordenacio_pagament_id, data_efecte, data_periode, id;   
+    -------------------------------------------------------------------------------
+    -- Table row type variables:
+    -------------------------------------------------------------------------------
     regPrestacioReserva	eco_prestacio_reserva%ROWTYPE;
     regDretReserva eco_dret_reserva%ROWTYPE;
     regMoviment eco_moviment%ROWTYPE;
@@ -80,9 +95,21 @@ DECLARE
     regOrdenacioPagament eco_ordenacio_pagament%ROWTYPE;
     regOrdenacioPagamentDetall eco_ordenacio_pagament_detall%ROWTYPE;
     regLiquidat eco_liquidat%ROWTYPE;
+    regDret eco_dret%ROWTYPE;
+    regNomina eco_nomina%ROWTYPE;
+    regPersona persona%ROWTYPE;
+    regNominaMensual eco_nomina_mensual%ROWTYPE;
+    regIdentificador identificador%ROWTYPE;    
+    regDadesBancaries dades_bancaries%ROWTYPE;
+    regNominaPersona eco_nomina_persona%ROWTYPE;
+    -------------------------------------------------------------------------------
+    -- Simple type variables:
+    -------------------------------------------------------------------------------
     expedientPrestacioId INTEGER;
     personaId INTEGER;
     nominaId INTEGER;
+    procedimentId INTEGER;
+    tramitId INTEGER;
     mostrarNomsColumnes BOOLEAN;
     posicio INTEGER;
     sumaTotal1 DECIMAL; 
@@ -90,7 +117,14 @@ DECLARE
     sumaTotal3 DECIMAL;
     sumaTotal4 DECIMAL;
     numTotalRegistres INTEGER;
+    descripcio TEXT := NULL;
+    importsPositius DECIMAL;
+    importsNegatius DECIMAL;
+    importTotal DECIMAL;
 BEGIN
+    -------------------------------------------------------------------------------
+    -- Checking input parameters:
+    -------------------------------------------------------------------------------
     IF prestacioId IS NULL AND dretId IS NULL AND numeroExpedient IS NULL THEN
         RAISE EXCEPTION 'No s''''ha indicat cap paràmetre'; 
     END IF;
@@ -110,217 +144,520 @@ BEGIN
             END IF;
         END IF;
     END IF;
-    SELECT pre.dret_id, pre.expedient_prestacio_id INTO dretId, expedientPrestacioId FROM prestacio pre WHERE id = prestacioId;
-    SELECT epr.persona_id, epr.numero_expedient INTO personaId, numeroExpedient FROM expedient_prestacio epr WHERE id = expedientPrestacioId;
-    SELECT dre.nomina_id INTO nominaId FROM eco_dret dre WHERE id = dretId;
-    RAISE NOTICE '----------------------------------------------------------------------------------------------------------------------------';
-	RAISE NOTICE ' Script eSocial gPPI v.3.2 release 20200907';
-    RAISE NOTICE '';
-    RAISE NOTICE ' Payroll Performance Information created by gluques.';    
-    RAISE NOTICE ' (c) 2020 - eSocial DXC Software.';
-	RAISE NOTICE '';
-	RAISE NOTICE '    Dades Prestació:';
-    RAISE NOTICE '      Prestació Id..: %', prestacioId;		
-    RAISE NOTICE '      Num.Expedient.: %', numeroExpedient;
-    RAISE NOTICE '      Persona Id....: %', personaId;
-    RAISE NOTICE '      Dret Id.......: %', dretId;
-    RAISE NOTICE '      Nòmina Id.....: %', nominaId;
-    RAISE NOTICE '';
-    RAISE NOTICE '    Data execució script: %', (SELECT (TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS')));	
-	RAISE NOTICE '----------------------------------------------------------------------------------------------------------------------------';    
-    ----------------------------------------------
-    -- eco_prestacio_reserva
-    ----------------------------------------------
-    IF (mostrarPrestacioReserva) THEN
-        mostrarNomsColumnes := TRUE;
-        sumaTotal1 := 0;
-        sumaTotal2 := 0;
-        numTotalRegistres := 0;
-        OPEN cur_PrestacioReserva(prestacioId);   
-        LOOP	
-          FETCH cur_PrestacioReserva INTO regPrestacioReserva;	
-          EXIT WHEN NOT FOUND;
-            IF (mostrarNomsColumnes) THEN
-                RAISE NOTICE 'Prestació Reserva:';
-                RAISE NOTICE '';
-                RAISE NOTICE '  Id      Reserva     Data Reserva         Imp.Reservat  Imp.Recuperat';
-                RAISE NOTICE '  ------  ----------  -------------------  ------------  -------------';
-                mostrarNomsColumnes := FALSE;
-            END IF;
-            RAISE NOTICE '  %  %  %  %  %', 
-                         RPAD(TO_CHAR(regPrestacioReserva.id, 'fm9999999'), 6, ' '),
-                         RPAD(TO_CHAR(regPrestacioReserva.reserva_id, 'fm999999'), 10, ' '),
-                         TO_CHAR(regPrestacioReserva.data_reserva, 'DD-MM-YYYY HH24:MI:SS'),
-                         LPAD(TO_CHAR(regPrestacioReserva.import_reservat, 'fm99999990.00'), 12, ' '),
-                         LPAD(TO_CHAR(regPrestacioReserva.import_recuperat, 'fm99999990.00'), 13, ' ');
-            sumaTotal1 := sumaTotal1 + regPrestacioReserva.import_reservat;
-            sumaTotal2 := sumaTotal2 + regPrestacioReserva.import_recuperat;
-            numTotalRegistres := numTotalRegistres + 1;
-        END LOOP;
-        CLOSE cur_PrestacioReserva;            
-        IF (mostrarNomsColumnes) THEN
-            RAISE NOTICE 'Prestació Reserva: sense registres';
-        ELSE
-            RAISE NOTICE '                                           ------------  -------------';
-            RAISE NOTICE '  %  %', 
-                         LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 53, ' '),
-                         LPAD(TO_CHAR(sumaTotal2, 'fm99999990.00'), 13, ' ');
-            IF (numTotalRegistres > 1) THEN
-                RAISE NOTICE '  % registres.', numTotalRegistres;
-            ELSE 
-                RAISE NOTICE '  1 registre.';
-            END IF;
+    -------------------------------------------------------------------------------
+    -- Script header:
+    -------------------------------------------------------------------------------    
+    SELECT pre.dret_id, pre.expedient_prestacio_id INTO dretId, expedientPrestacioId FROM prestacio pre WHERE pre.id = prestacioId;    
+    IF expedientPrestacioId IS NOT NULL THEN
+        SELECT epr.persona_id, epr.numero_expedient INTO personaId, numeroExpedient FROM expedient_prestacio epr WHERE epr.id = expedientPrestacioId;
+        SELECT ppr.id INTO procedimentId FROM procediment_prestacio ppr WHERE ppr.expedient_prestacio_id = expedientPrestacioId;
+        IF nominaId IS NULL THEN
+            SELECT tramit_id INTO tramitId FROM eco_moviment 
+            WHERE expedient_id = expedientPrestacioId AND procediment_id = procedimentId 
+            ORDER BY data_creacio_moviment DESC, id DESC LIMIT 1;
+        ELSE 
+            SELECT tramit_id INTO tramitId FROM eco_moviment
+            WHERE id = (SELECT moviment_id FROM eco_moviment_detall WHERE nomina_id = nominaId 
+                        ORDER BY data_efecte_inicial DESC, id DESC LIMIT 1);
         END IF;
     END IF;
-    IF (dretId IS NOT NULL) THEN 
+    SELECT dre.nomina_id INTO nominaId FROM eco_dret dre WHERE id = dretId;        
+    RAISE INFO '----------------------------------------------------------------------------------------------------------------------------';
+	RAISE INFO ' Script eSocial gPPI v.4.0 release 20200921';
+    RAISE INFO '';
+    RAISE INFO ' Payroll Performance Information created by gluques.';    
+    RAISE INFO ' (c) 2020 - eSocial DXC Software.';
+	RAISE INFO '';
+	RAISE INFO '    Dades Prestació:';
+    RAISE INFO '      Num.Expedient......: %', numeroExpedient;
+    RAISE INFO '      Persona Id.........: %', personaId;    
+    RAISE INFO '      Exp.Prestació Id...: %', expedientPrestacioId;
+    RAISE INFO '      Procediment Id.....: %', procedimentId;
+    RAISE INFO '      Tramit Id..........: %', tramitId;
+    RAISE INFO '      Prestació Id.......: %', prestacioId;
+    RAISE INFO '      Dret Id............: %', dretId;
+    RAISE INFO '      Nòmina Id..........: %', nominaId;
+    RAISE INFO '';
+    RAISE INFO '    Data execució script: %', (SELECT (TO_CHAR(NOW(), 'YYYY-MM-DD HH24:MI:SS')));	
+	RAISE INFO '----------------------------------------------------------------------------------------------------------------------------';
+    -------------------------------------------------------------------------------
+    -- Información de situació:
+    -------------------------------------------------------------------------------
+    IF (mostrarInformaciSituacio AND 
+        (mostratInformaciSituacioDret OR mostratInformaciSituacioNomina OR 
+         mostratInformaciSituacioPersona OR mostratInformaciSituacioNominaMensual)) 
+    THEN            
+        RAISE INFO 'INFORMACIÓ DE SITUACIÓ:';
+        RAISE INFO '';
         ----------------------------------------------
-        -- eco_dret_reserva
+        --- Informació de situació - Dret:    
         ----------------------------------------------
-        IF (mostrarDretReserva) THEN
-            RAISE NOTICE '';        
+        IF (mostratInformaciSituacioDret) THEN            
+            SELECT * INTO regDret FROM eco_dret WHERE id = dretId;
+            RAISE INFO '  Dret...................: %', dretId;
+            RAISE INFO '    Data activació.......: %', regDret.data_activacio;
+            RAISE INFO '    Data canvi estat.....: %', regDret.data_canvi_estat;
+            RAISE INFO '    Data efecte inici....: %', regDret.data_efecte_inici;
+            RAISE INFO '    Data efecte fi.......: %', regDret.data_efecte_fi;
+            SELECT lvi.descripcio INTO descripcio FROM eco_tipus_estat_dret eted
+            JOIN llistat_valors lv ON eted.llistat_valors_id = lv.id
+            JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
+            WHERE eted.id = regDret.estat_id;
+            RAISE INFO '    Estat................: % [%]', descripcio, regDret.estat_id;
+            SELECT lvi.descripcio INTO descripcio FROM eco_motiu_estat_dret emed
+            JOIN llistat_valors lv ON emed.llistat_valors_id = lv.id
+            JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
+            WHERE emed.id = regDret.estat_motiu_id;
+            RAISE INFO '    Motiu estat..........: % [%]', descripcio, regDret.estat_motiu_id;   
+        END IF;        
+        ----------------------------------------------
+        --- Informació de situació - Nòmina:    
+        ----------------------------------------------
+        SELECT * INTO regNomina FROM eco_nomina WHERE id = nominaId;
+        IF (mostratInformaciSituacioNomina) THEN                        
+            RAISE INFO '  Nòmina.................: %', nominaId;                	
+            RAISE INFO '    Alta.................: %', regNomina.data_alta_nomina;
+            SELECT lvi.descripcio INTO descripcio FROM eco_tipus_nomina etn
+            JOIN llistat_valors lv ON etn.llistat_valors_id = lv.id
+            JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
+            WHERE etn.id = regNomina.tipus_nomina_id;
+            RAISE INFO '    Tipus................: % [%]', descripcio, regNomina.tipus_nomina_id;	
+            RAISE INFO '    Primera execució.....: %', regNomina.data_primera_execucio;
+            RAISE INFO '    Efecte inici.........: %', regNomina.data_efecte_inici;
+            RAISE INFO '    Efecte fi............: %', regNomina.data_efecte_fi;
+            SELECT lvi.descripcio INTO descripcio FROM eco_estat_nomina een
+            JOIN llistat_valors lv ON een.llistat_valors_id = lv.id
+            JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
+            WHERE een.id = regNomina.estat_id;
+            RAISE INFO '    Estat................: % [%]', descripcio, regNomina.estat_id;
+            SELECT lvi.descripcio INTO descripcio FROM eco_motiu_estat_nomina emen
+            JOIN llistat_valors lv ON emen.llistat_valors_id = lv.id
+            JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
+            WHERE emen.id = regNomina.estat_motiu_id;
+            RAISE INFO '    Motiu estat..........: % [%]', descripcio, regNomina.estat_motiu_id;	
+            RAISE INFO '    Data estat...........: %', regNomina.data_estat;
+        END IF;
+        ----------------------------------------------
+        --- Informació de situació - Persona:    
+        ----------------------------------------------
+        IF (mostratInformaciSituacioPersona) THEN            
+            SELECT * INTO regPersona FROM persona WHERE id = personaId;
+            SELECT * INTO regIdentificador FROM identificador WHERE persona_id = personaId;          
+            SELECT INTO regNominaPersona * FROM eco_nomina_persona WHERE nomina_id = nominaId;    
+            SELECT * INTO regDadesBancaries FROM dades_bancaries WHERE id = regNominaPersona.dades_bancaries_id;
+            RAISE INFO '  Persona................: %', personaId;
+            RAISE INFO '    Nom i cognoms........: %', regPersona.nom || ' ' || regPersona.cognom1 || ' ' || regPersona.cognom2;
+            RAISE INFO '    Actiu................: %', CASE WHEN regPersona.actiu THEN 'True' ELSE 'False' END;
+            RAISE INFO '    Identificador........: %', regIdentificador.valor;
+            RAISE INFO '    IBAN.................: %', regDadesBancaries.iban;		
+        END IF;
+        ----------------------------------------------
+        -- Informació de situació - Nòmina Mensual:
+        ----------------------------------------------
+        IF (mostratInformaciSituacioNominaMensual) THEN            
+            SELECT * INTO regNominaMensual FROM eco_nomina_mensual WHERE tipus_nomina_id = regNomina.tipus_nomina_id ORDER BY data_nomina DESC LIMIT 1;
+            RAISE INFO '  Última Nòmina.Mensual..: %', regNominaMensual.id;	        
+            SELECT lvi.descripcio INTO descripcio FROM eco_tipus_nomina etn
+            JOIN llistat_valors lv ON etn.llistat_valors_id = lv.id
+            JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
+            WHERE etn.id = regNominaMensual.tipus_nomina_id;
+            RAISE INFO '    Tipus nòmina.........: % [%]', descripcio, regNominaMensual.tipus_nomina_id;
+            RAISE INFO '    Data.................: %', regNominaMensual.data_nomina;
+            RAISE INFO '    Data generació.......: %', regNominaMensual.data_inici_generacio;
+            RAISE INFO '    Estat................: ''%''', regNominaMensual.estat;        
+            RAISE INFO '    Data canvi estat.....: %', regNominaMensual.data_canvi_estat;    
+        END IF;
+	ELSE 
+		mostrarInformaciSituacio = FALSE;
+    END IF;
+    -------------------------------------------------------------------------------
+    -- Resum imports taules:
+    -------------------------------------------------------------------------------
+    IF (mostrarResumImportsTaules) THEN        
+        RAISE INFO '';
+        RAISE INFO 'RESUM IMPORTS TAULES:';
+        RAISE INFO '                                Imp.Positius  Imp.Negatius  Imp.Total';
+        RAISE INFO '                                ------------  ------------  ------------';    
+        ----------------------------------------------
+        -- Resum imports taules - Activitat Detall:
+        ----------------------------------------------
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_activitat_detall WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE INFO '    Activitat Detall....:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+        ----------------------------------------------
+        -- Resum imports taules - Dret Teòric:
+        ----------------------------------------------
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_dret_teoric WHERE dret_id = dretId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE INFO '    Dret Teòric.........:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+        ----------------------------------------------
+        -- Resum imports taules - Dret Teòric Detall:
+        ----------------------------------------------
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_dret_teoric_detall WHERE dret_id = dretId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE INFO '    Dret Teòric Detall..:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+        ----------------------------------------------
+        -- Resum imports taules - Deute:
+        ----------------------------------------------
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_deute WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE INFO '    Deute...............:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+        ----------------------------------------------
+        -- Resum imports taules - Deute Detall:
+        ----------------------------------------------
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_deute_detall WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE INFO '    Deute Detall........:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+        ----------------------------------------------
+        -- Resum imports taules - Percebut:
+        ----------------------------------------------
+        SELECT SUM(CASE WHEN (import_percebut > 0) THEN import_percebut ELSE 0 END),
+               SUM(CASE WHEN (import_percebut < 0) THEN import_percebut ELSE 0 END) AS "Imp.Negatius",
+               SUM(import_percebut) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_percebut WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;        
+        RAISE INFO '    Percebut............:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+        ----------------------------------------------
+        -- Resum imports taules - Percebut Detall:
+        ----------------------------------------------
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_percebut_detall WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE INFO '    Percebut Detall.....:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+                                                 
+        ----------------------------------------------
+        -- Resum imports taules - Ordenació Pagament:
+        ----------------------------------------------
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_ordenacio_pagament WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE INFO '    Ord.Pagament........:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+        ----------------------------------------------
+        -- Resum imports taules - Ord.Pagament Detall:
+        ----------------------------------------------
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_ordenacio_pagament_detall WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE INFO '    Ord.Pagament Detall.:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+        ----------------------------------------------
+        -- Resum imports taules - Liquidat:
+        ----------------------------------------------
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_liquidat WHERE dret_id = dretId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE INFO '    Liquidat............:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+    END IF;
+    -------------------------------------------------------------------------------
+    -- Tables data:
+    -------------------------------------------------------------------------------
+    IF (mostrarDadesTaules AND (mostrarPrestacioReserva OR 
+       (dretId IS NOT NULL AND (mostrarDretReserva OR mostrarEfecteMovimentNomina OR 
+                                mostrarActivitat OR mostrarDretTeoric OR mostrarDretTeoricDetall)) OR
+       (nominaId IS NOT NULL AND (mostrarMoviment OR mostrarMovimentDetall OR mostrarActivitatDetall OR 
+                                  mostrarDeute OR mostrarDeuteDetall OR mostrarPercebut OR 
+                                  mostrarPercebutDetall OR mostrarOrdenacioPagament OR 
+                                  mostrarOrdenacioPagamentDetall OR mostrarLiquidat))))       
+    THEN
+        RAISE INFO '';
+        RAISE INFO 'DADES TAULES:';
+        ----------------------------------------------
+        -- Dades taules - eco_prestacio_reserva
+        ----------------------------------------------
+        IF (mostrarPrestacioReserva) THEN
+            RAISE INFO '';
             mostrarNomsColumnes := TRUE;
+            sumaTotal1 := 0;
+            sumaTotal2 := 0;
             numTotalRegistres := 0;
-            OPEN cur_DretReserva(dretId);   
+            OPEN cur_PrestacioReserva(prestacioId);   
             LOOP	
-              FETCH cur_DretReserva INTO regDretReserva;	
+              FETCH cur_PrestacioReserva INTO regPrestacioReserva;	
               EXIT WHEN NOT FOUND;
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Dret Reserva:';
-                    RAISE NOTICE '';
-                    RAISE NOTICE '  Id      Imp.Reservat  Imp.Ordenat  Imp.Trames  Imp.Pagat  Imp.Recuperat  Imp.Restant'; 
-                    RAISE NOTICE '  ------  ------------  -----------  ----------  ---------  -------------  -----------';
+                    RAISE INFO '  Prestació Reserva:';
+                    RAISE INFO '';
+                    RAISE INFO '    Id      Reserva     Data Reserva         Imp.Reservat  Imp.Recuperat';
+                    RAISE INFO '    ------  ----------  -------------------  ------------  -------------';
                     mostrarNomsColumnes := FALSE;
                 END IF;
-                RAISE NOTICE '  %  %  %  %  %  %  %', 
-                             RPAD(TO_CHAR(regDretReserva.id, 'fm9999999'), 6, ' '),                             
-                             LPAD(TO_CHAR(regDretReserva.import_reservat, 'fm99999990.00'), 12, ' '),
-                             LPAD(TO_CHAR(regDretReserva.import_ordenat, 'fm99999990.00'), 11, ' '),
-                             LPAD(TO_CHAR(regDretReserva.import_trames, 'fm99999990.00'), 10, ' '),
-                             LPAD(TO_CHAR(regDretReserva.import_pagat, 'fm99999990.00'), 9, ' '),
-                             LPAD(TO_CHAR(regDretReserva.import_recuperat, 'fm99999990.00'), 13, ' '),
-                             LPAD(TO_CHAR(regDretReserva.import_restant, 'fm99999990.00'), 11, ' ');
+                RAISE INFO '    %  %  %  %  %', 
+                             RPAD(TO_CHAR(regPrestacioReserva.id, 'fm9999999'), 6, ' '),
+                             RPAD(TO_CHAR(regPrestacioReserva.reserva_id, 'fm999999'), 10, ' '),
+                             TO_CHAR(regPrestacioReserva.data_reserva, 'DD-MM-YYYY HH24:MI:SS'),
+                             LPAD(TO_CHAR(regPrestacioReserva.import_reservat, 'fm99999990.00'), 12, ' '),
+                             LPAD(TO_CHAR(regPrestacioReserva.import_recuperat, 'fm99999990.00'), 13, ' ');
+                sumaTotal1 := sumaTotal1 + regPrestacioReserva.import_reservat;
+                sumaTotal2 := sumaTotal2 + regPrestacioReserva.import_recuperat;
                 numTotalRegistres := numTotalRegistres + 1;
             END LOOP;
-            CLOSE cur_DretReserva;
+            CLOSE cur_PrestacioReserva;            
             IF (mostrarNomsColumnes) THEN
-                RAISE NOTICE 'Dret Reserva: sense registres';
+                RAISE INFO '  Prestació Reserva: sense registres';
             ELSE
-                RAISE NOTICE '';
+                RAISE INFO '                                             ------------  -------------';
+                RAISE INFO '    %  %', 
+                             LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 53, ' '),
+                             LPAD(TO_CHAR(sumaTotal2, 'fm99999990.00'), 13, ' ');
                 IF (numTotalRegistres > 1) THEN
-                    RAISE NOTICE '  % registres.', numTotalRegistres;
+                    RAISE INFO '    % registres.', numTotalRegistres;
                 ELSE 
-                    RAISE NOTICE '  1 registre.';
+                    RAISE INFO '    1 registre.';
                 END IF;
             END IF;
         END IF;
-        IF (nominaId IS NOT NULL) THEN 
+        IF (dretId IS NOT NULL) THEN 
             ----------------------------------------------
-            -- eco_moviment
+            -- Dades taules - eco_dret_reserva
             ----------------------------------------------
-            IF (mostrarMoviment) THEN
-                RAISE NOTICE '';        
+            IF (mostrarDretReserva) THEN
+                RAISE INFO '';        
                 mostrarNomsColumnes := TRUE;
                 numTotalRegistres := 0;
-                OPEN cur_Moviment(nominaId);
+                OPEN cur_DretReserva(dretId);   
                 LOOP	
-                  FETCH cur_Moviment INTO regMoviment;	
+                  FETCH cur_DretReserva INTO regDretReserva;	
                   EXIT WHEN NOT FOUND;
                     IF (mostrarNomsColumnes) THEN
-                        RAISE NOTICE 'Moviment:';
-                        RAISE NOTICE '';
-                        RAISE NOTICE '  Id      Expedient  Procediment  Tramit  Data creació         Estat '; 
-                        RAISE NOTICE '  ------  ---------  -----------  ------  -------------------  ------------';
+                        RAISE INFO '  Dret Reserva:';
+                        RAISE INFO '';
+                        RAISE INFO '    Id      Imp.Reservat  Imp.Ordenat  Imp.Trames  Imp.Pagat  Imp.Recuperat  Imp.Restant'; 
+                        RAISE INFO '    ------  ------------  -----------  ----------  ---------  -------------  -----------';
                         mostrarNomsColumnes := FALSE;
                     END IF;
-                    RAISE NOTICE '  %  %  %  %  %  %', 
-                                 RPAD(TO_CHAR(regMoviment.id, 'fm9999999'), 6, ' '), 
-                                 RPAD(TO_CHAR(regMoviment.expedient_id, 'fm999999'), 9, ' '),
-                                 RPAD(TO_CHAR(regMoviment.procediment_id, 'fm999999'), 11, ' '),
-                                 RPAD(TO_CHAR(regMoviment.tramit_id, 'fm999999'), 6, ' '),
-                                 TO_CHAR(regMoviment.data_creacio_moviment, 'DD-MM-YYYY HH24:MI:SS'),
-                                 regMoviment.estat_moviment;
+                    RAISE INFO '    %  %  %  %  %  %  %', 
+                                 RPAD(TO_CHAR(regDretReserva.id, 'fm9999999'), 6, ' '),                             
+                                 LPAD(TO_CHAR(regDretReserva.import_reservat, 'fm99999990.00'), 12, ' '),
+                                 LPAD(TO_CHAR(regDretReserva.import_ordenat, 'fm99999990.00'), 11, ' '),
+                                 LPAD(TO_CHAR(regDretReserva.import_trames, 'fm99999990.00'), 10, ' '),
+                                 LPAD(TO_CHAR(regDretReserva.import_pagat, 'fm99999990.00'), 9, ' '),
+                                 LPAD(TO_CHAR(regDretReserva.import_recuperat, 'fm99999990.00'), 13, ' '),
+                                 LPAD(TO_CHAR(regDretReserva.import_restant, 'fm99999990.00'), 11, ' ');
                     numTotalRegistres := numTotalRegistres + 1;
                 END LOOP;
-                CLOSE cur_Moviment;            
+                CLOSE cur_DretReserva;
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Moviment: sense registres';
+                    RAISE INFO '  Dret Reserva: sense registres';
                 ELSE
-                    RAISE NOTICE '';
+                    RAISE INFO '';
                     IF (numTotalRegistres > 1) THEN
-                        RAISE NOTICE '  % registres.', numTotalRegistres;
+                        RAISE INFO '    % registres.', numTotalRegistres;
                     ELSE 
-                        RAISE NOTICE '  1 registre.';
-                    END IF;
-                    IF (mostrarContingutMoviment) THEN
-                        OPEN cur_Moviment(nominaId);
-                        LOOP	
-                          FETCH cur_Moviment INTO regMoviment;
-                          EXIT WHEN NOT FOUND;
-                            RAISE NOTICE '';
-                            RAISE NOTICE '  Contingut Moviment..: %', regMoviment.id;
-                            RAISE NOTICE '';
-                            posicio := 1;
-                            WHILE (posicio < character_length(regMoviment.contingut_moviment)) LOOP
-                                IF ((posicio + 79) > character_length(regMoviment.contingut_moviment)) THEN
-                                    RAISE NOTICE '        %', substring(regMoviment.contingut_moviment FROM posicio FOR character_length(regMoviment.contingut_moviment));
-                                ELSE
-                                    RAISE NOTICE '        %', substring(regMoviment.contingut_moviment FROM posicio FOR 79);
-                                END IF;
-                                posicio := posicio + 79;
-                            END LOOP;
-                          EXIT WHEN NOT FOUND;
-                        END LOOP;
-                        CLOSE cur_Moviment;
+                        RAISE INFO '    1 registre.';
                     END IF;
                 END IF;
             END IF;
-            ----------------------------------------------
-            -- eco_moviment_detall
-            ----------------------------------------------
-            IF (mostrarMovimentDetall) THEN
-                RAISE NOTICE '';        
-                mostrarNomsColumnes := TRUE;   
-                numTotalRegistres := 0;            
-                OPEN cur_Moviment_Detall(nominaId);
-                LOOP	
-                  FETCH cur_Moviment_Detall INTO regMovimentDetall;	
-                  EXIT WHEN NOT FOUND;
+            IF (nominaId IS NOT NULL) THEN 
+                ----------------------------------------------
+                -- Dades taules - eco_moviment
+                ----------------------------------------------
+                IF (mostrarMoviment) THEN
+                    RAISE INFO '';        
+                    mostrarNomsColumnes := TRUE;
+                    numTotalRegistres := 0;
+                    OPEN cur_Moviment(nominaId);
+                    LOOP	
+                      FETCH cur_Moviment INTO regMoviment;	
+                      EXIT WHEN NOT FOUND;
+                        IF (mostrarNomsColumnes) THEN
+                            RAISE INFO '  Moviment:';
+                            RAISE INFO '';
+                            RAISE INFO '    Id      Expedient  Procediment  Tramit  Data creació         Estat '; 
+                            RAISE INFO '    ------  ---------  -----------  ------  -------------------  ------------';
+                            mostrarNomsColumnes := FALSE;
+                        END IF;
+                        RAISE INFO '    %  %  %  %  %  %', 
+                                     RPAD(TO_CHAR(regMoviment.id, 'fm9999999'), 6, ' '), 
+                                     RPAD(TO_CHAR(regMoviment.expedient_id, 'fm999999'), 9, ' '),
+                                     RPAD(TO_CHAR(regMoviment.procediment_id, 'fm999999'), 11, ' '),
+                                     RPAD(TO_CHAR(regMoviment.tramit_id, 'fm999999'), 6, ' '),
+                                     TO_CHAR(regMoviment.data_creacio_moviment, 'DD-MM-YYYY HH24:MI:SS'),
+                                     regMoviment.estat_moviment;
+                        numTotalRegistres := numTotalRegistres + 1;
+                    END LOOP;
+                    CLOSE cur_Moviment;            
                     IF (mostrarNomsColumnes) THEN
-                        RAISE NOTICE 'Moviment Detall:';
-                        RAISE NOTICE '';
-                        RAISE NOTICE '  Id      Rcd_Crt_Ts           Moviment  Data Efecte Inicial  Data Efecte Final    Import    '; 
-                        RAISE NOTICE '  ------  -------------------  --------  -------------------  -------------------  ----------';
-                        mostrarNomsColumnes := FALSE;
+                        RAISE INFO '  Moviment: sense registres';
+                    ELSE
+                        RAISE INFO '';
+                        IF (numTotalRegistres > 1) THEN
+                            RAISE INFO '    % registres.', numTotalRegistres;
+                        ELSE 
+                            RAISE INFO '    1 registre.';
+                        END IF;
+                        IF (mostrarContingutMoviment) THEN
+                            OPEN cur_Moviment(nominaId);
+                            LOOP	
+                              FETCH cur_Moviment INTO regMoviment;
+                              EXIT WHEN NOT FOUND;
+                                RAISE INFO '';
+                                RAISE INFO '    Contingut Moviment: %', regMoviment.id;
+                                RAISE INFO '';
+                                posicio := 1;
+                                WHILE (posicio < character_length(regMoviment.contingut_moviment)) LOOP
+                                    IF ((posicio + 79) > character_length(regMoviment.contingut_moviment)) THEN
+                                        RAISE INFO '          %', substring(regMoviment.contingut_moviment FROM posicio FOR character_length(regMoviment.contingut_moviment));
+                                    ELSE
+                                        RAISE INFO '          %', substring(regMoviment.contingut_moviment FROM posicio FOR 79);
+                                    END IF;
+                                    posicio := posicio + 79;
+                                END LOOP;
+                              EXIT WHEN NOT FOUND;
+                            END LOOP;
+                            CLOSE cur_Moviment;
+                        END IF;
                     END IF;
-                    RAISE NOTICE '  %  %  %  %  %  %', 
-                                 RPAD(TO_CHAR(regMovimentDetall.id, 'fm9999999'), 6, ' '), 
-                                 TO_CHAR(regMovimentDetall.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'),
-                                 RPAD(TO_CHAR(regMovimentDetall.moviment_id, 'fm9999999'), 8, ' '),
-                                 TO_CHAR(regMovimentDetall.data_efecte_inicial, 'DD-MM-YYYY HH24:MI:SS'),
-                                 TO_CHAR(regMovimentDetall.data_efecte_final, 'DD-MM-YYYY HH24:MI:SS'),
-                                 CASE WHEN regMovimentDetall.data_efecte_final IS NULL 
-                                    THEN LPAD(TO_CHAR(regMovimentDetall.import_moviment, 'fm99999990.00'), 19, ' ') 
-                                    ELSE TO_CHAR(regMovimentDetall.import_moviment, 'fm99999990.00') END;
-                    numTotalRegistres := numTotalRegistres + 1;
-                END LOOP;
-                CLOSE cur_Moviment_Detall;            
-                IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Moviment Detall: sense registres';
-                ELSE 
-                    RAISE NOTICE '';
-                    IF (numTotalRegistres > 1) THEN
-                        RAISE NOTICE '  % registres.', numTotalRegistres;
+                END IF;
+                ----------------------------------------------
+                -- Dades taules - eco_moviment_detall
+                ----------------------------------------------
+                IF (mostrarMovimentDetall) THEN
+                    RAISE INFO '';        
+                    mostrarNomsColumnes := TRUE;   
+                    numTotalRegistres := 0;            
+                    OPEN cur_Moviment_Detall(nominaId);
+                    LOOP	
+                      FETCH cur_Moviment_Detall INTO regMovimentDetall;	
+                      EXIT WHEN NOT FOUND;
+                        IF (mostrarNomsColumnes) THEN
+                            RAISE INFO '  Moviment Detall:';
+                            RAISE INFO '';
+                            RAISE INFO '    Id      Rcd_Crt_Ts           Moviment  Data Efecte Inicial  Data Efecte Final    Import    '; 
+                            RAISE INFO '    ------  -------------------  --------  -------------------  -------------------  ----------';
+                            mostrarNomsColumnes := FALSE;
+                        END IF;
+                        RAISE INFO '    %  %  %  %  %  %', 
+                                     RPAD(TO_CHAR(regMovimentDetall.id, 'fm9999999'), 6, ' '), 
+                                     TO_CHAR(regMovimentDetall.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'),
+                                     RPAD(TO_CHAR(regMovimentDetall.moviment_id, 'fm9999999'), 8, ' '),
+                                     TO_CHAR(regMovimentDetall.data_efecte_inicial, 'DD-MM-YYYY HH24:MI:SS'),
+                                     TO_CHAR(regMovimentDetall.data_efecte_final, 'DD-MM-YYYY HH24:MI:SS'),
+                                     CASE WHEN regMovimentDetall.data_efecte_final IS NULL 
+                                        THEN LPAD(TO_CHAR(regMovimentDetall.import_moviment, 'fm99999990.00'), 23, ' ') 
+                                        ELSE TO_CHAR(regMovimentDetall.import_moviment, 'fm99999990.00') END;
+                        numTotalRegistres := numTotalRegistres + 1;
+                    END LOOP;
+                    CLOSE cur_Moviment_Detall;            
+                    IF (mostrarNomsColumnes) THEN
+                        RAISE INFO '  Moviment Detall: sense registres';
                     ELSE 
-                        RAISE NOTICE '  1 registre.';
-                    END IF;
-                END IF;            
+                        RAISE INFO '';
+                        IF (numTotalRegistres > 1) THEN
+                            RAISE INFO '    % registres.', numTotalRegistres;
+                        ELSE 
+                            RAISE INFO '    1 registre.';
+                        END IF;
+                    END IF;            
+                END IF;
             END IF;
         END IF;
         ----------------------------------------------
-        -- eco_efecte_moviment_nomina
+        -- Dades taules - eco_efecte_moviment_nomina
         ----------------------------------------------
         IF (mostrarEfecteMovimentNomina) THEN
-            RAISE NOTICE '';        
+            RAISE INFO '';        
             mostrarNomsColumnes := TRUE;
             numTotalRegistres := 0;
             OPEN cur_EfecteMovimentNomina(dretId);   
@@ -328,13 +665,13 @@ BEGIN
               FETCH cur_EfecteMovimentNomina INTO regEfecteMovimentNomina;	
               EXIT WHEN NOT FOUND;
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Efecte Moviment Nòmina:';
-                    RAISE NOTICE '';
-                    RAISE NOTICE '  Id      Mov.Detall  Tipus  Data Inici           Data Fi              Imp.Anterior  Imp.Actual  Diferencial'; 
-                    RAISE NOTICE '  ------  ----------  -----  -------------------  -------------------  ------------  ----------  -----------';
+                    RAISE INFO '  Efecte Moviment Nòmina:';
+                    RAISE INFO '';
+                    RAISE INFO '    Id      Mov.Detall  Tipus  Data Inici           Data Fi              Imp.Anterior  Imp.Actual  Diferencial'; 
+                    RAISE INFO '    ------  ----------  -----  -------------------  -------------------  ------------  ----------  -----------';
                     mostrarNomsColumnes := FALSE;
                 END IF;
-                RAISE NOTICE '  %  %  %  %  %  %  %  %', 
+                RAISE INFO '    %  %  %  %  %  %  %  %', 
                              RPAD(TO_CHAR(regEfecteMovimentNomina.id, 'fm9999999'), 6, ' '), 
                              RPAD(TO_CHAR(regEfecteMovimentNomina.moviment_detall_id, 'fm999999'), 10, ' '),
                              RPAD(TO_CHAR(regEfecteMovimentNomina.tipus_id, 'fm99'), 5, ' '),
@@ -350,21 +687,21 @@ BEGIN
             END LOOP;
             CLOSE cur_EfecteMovimentNomina;
             IF (mostrarNomsColumnes) THEN
-                RAISE NOTICE 'Efecte Moviment Nòmina: sense registres';
+                RAISE INFO '  Efecte Moviment Nòmina: sense registres';
             ELSE
-                RAISE NOTICE '';
+                RAISE INFO '';
                 IF (numTotalRegistres > 1) THEN
-                    RAISE NOTICE '  % registres.', numTotalRegistres;
+                    RAISE INFO '    % registres.', numTotalRegistres;
                 ELSE 
-                    RAISE NOTICE '  1 registre.';
+                    RAISE INFO '    1 registre.';
                 END IF;
             END IF;
         END IF;
         ----------------------------------------------
-        -- eco_activitat
+        -- Dades taules - eco_activitat
         ----------------------------------------------
         IF (mostrarActivitat) THEN
-            RAISE NOTICE '';        
+            RAISE INFO '';        
             mostrarNomsColumnes := TRUE;
             numTotalRegistres := 0;
             OPEN cur_Activitat(dretId);   
@@ -372,13 +709,13 @@ BEGIN
               FETCH cur_Activitat INTO regActivitat;	
               EXIT WHEN NOT FOUND;
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Activitat:';
-                    RAISE NOTICE '';
-                    RAISE NOTICE '  Id      Moviment  Data Inici           Data Fi              Quantitat  Estat  Arxivat  Modalitat  Liquidació'; 
-                    RAISE NOTICE '  ------  --------  -------------------  -------------------  ---------  -----  -------  ---------  ----------';
+                    RAISE INFO '  Activitat:';
+                    RAISE INFO '';
+                    RAISE INFO '    Id      Moviment  Data Inici           Data Fi              Quantitat  Estat  Arxivat  Modalitat  Liquidació'; 
+                    RAISE INFO '    ------  --------  -------------------  -------------------  ---------  -----  -------  ---------  ----------';
                     mostrarNomsColumnes := FALSE;
                 END IF;
-                RAISE NOTICE '  %  %  %  %  %  %  %  %  %', 
+                RAISE INFO '    %  %  %  %  %  %  %  %  %', 
                              RPAD(TO_CHAR(regActivitat.id, 'fm9999999'), 6, ' '), 
                              RPAD(TO_CHAR(regActivitat.moviment_id, 'fm999999'), 8, ' '),                             
                              TO_CHAR(regActivitat.data_efecte_inicial, 'DD-MM-YYYY HH24:MI:SS'),
@@ -394,22 +731,22 @@ BEGIN
             END LOOP;
             CLOSE cur_Activitat;
             IF (mostrarNomsColumnes) THEN
-                RAISE NOTICE 'Activitat: sense registres';
+                RAISE INFO '  Activitat: sense registres';
             ELSE
-                RAISE NOTICE '';
+                RAISE INFO '';
                 IF (numTotalRegistres > 1) THEN
-                    RAISE NOTICE '  % registres.', numTotalRegistres;
+                    RAISE INFO '    % registres.', numTotalRegistres;
                 ELSE 
-                    RAISE NOTICE '  1 registre.';
+                    RAISE INFO '    1 registre.';
                 END IF;
             END IF;
         END IF;    
         IF (nominaId IS NOT NULL) THEN 
             ----------------------------------------------
-            -- eco_activitat_detall
+            -- Dades taules - eco_activitat_detall
             ----------------------------------------------
             IF (mostrarActivitatDetall) THEN
-                RAISE NOTICE '';        
+                RAISE INFO '';        
                 mostrarNomsColumnes := TRUE;
                 numTotalRegistres := 0;
                 sumaTotal1 := 0;
@@ -418,13 +755,13 @@ BEGIN
                   FETCH cur_ActivitatDetall INTO regActivitatDetall;	
                   EXIT WHEN NOT FOUND;
                     IF (mostrarNomsColumnes) THEN
-                        RAISE NOTICE 'Activitat Detall:';
-                        RAISE NOTICE '';
-                        RAISE NOTICE '  Id      N.Mensual  Activitat  Data Efecte          Quantitat  Modalitat  T.Pagament'; 
-                        RAISE NOTICE '  ------  ---------  ---------  -------------------  ---------  ---------  ----------';
+                        RAISE INFO '  Activitat Detall:';
+                        RAISE INFO '';
+                        RAISE INFO '    Id      N.Mensual  Activitat  Data Efecte          Quantitat  Modalitat  T.Pagament'; 
+                        RAISE INFO '    ------  ---------  ---------  -------------------  ---------  ---------  ----------';
                         mostrarNomsColumnes := FALSE;
                     END IF;
-                    RAISE NOTICE '  %  %  %  %  %  %  %', 
+                    RAISE INFO '    %  %  %  %  %  %  %', 
                                  RPAD(TO_CHAR(regActivitatDetall.id, 'fm9999999'), 6, ' '), 
                                  RPAD(TO_CHAR(regActivitatDetall.nomina_mensual_id, 'fm999999'), 9, ' '),
                                  RPAD(TO_CHAR(regActivitatDetall.activitat_id, 'fm999999'), 9, ' '),                                 
@@ -437,24 +774,24 @@ BEGIN
                 END LOOP;
                 CLOSE cur_ActivitatDetall;
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Activitat Detall: sense registres';
+                    RAISE INFO '  Activitat Detall: sense registres';
                 ELSE
-                    RAISE NOTICE '                                                     ---------                       ';
-                    RAISE NOTICE '  %', 
+                    RAISE INFO '                                                       ---------';
+                    RAISE INFO '    %', 
                                  LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 60, ' ');
                     IF (numTotalRegistres > 1) THEN
-                        RAISE NOTICE '  % registres.', numTotalRegistres;
+                        RAISE INFO '    % registres.', numTotalRegistres;
                     ELSE 
-                        RAISE NOTICE '  1 registre.';
+                        RAISE INFO '    1 registre.';
                     END IF;
                 END IF;
             END IF;
         END IF;
         ----------------------------------------------
-        -- eco_dret_teoric
+        -- Dades taules - eco_dret_teoric
         ----------------------------------------------
         IF (mostrarDretTeoric) THEN
-            RAISE NOTICE '';        
+            RAISE INFO '';        
             mostrarNomsColumnes := TRUE;
             numTotalRegistres := 0;
             sumaTotal1 := 0;
@@ -463,13 +800,13 @@ BEGIN
               FETCH cur_DretTeoric INTO regDretTeoric;	
               EXIT WHEN NOT FOUND;
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Dret Teòric:';
-                    RAISE NOTICE '';
-                    RAISE NOTICE '  Id      Data Efecte          Quantitat  Data Execució'; 
-                    RAISE NOTICE '  ------  -------------------  ---------  -------------------';
+                    RAISE INFO '  Dret Teòric:';
+                    RAISE INFO '';
+                    RAISE INFO '    Id      Data Efecte          Quantitat  Data Execució'; 
+                    RAISE INFO '    ------  -------------------  ---------  -------------------';
                     mostrarNomsColumnes := FALSE;
                 END IF;
-                RAISE NOTICE '  %  %  %  %', 
+                RAISE INFO '    %  %  %  %', 
                              RPAD(TO_CHAR(regDretTeoric.id, 'fm9999999'), 6, ' '),                                                              
                              TO_CHAR(regDretTeoric.data_efecte, 'DD-MM-YYYY HH24:MI:SS'),
                              LPAD(TO_CHAR(regDretTeoric.quantitat, 'fm99999990.00'), 9, ' '),
@@ -479,23 +816,23 @@ BEGIN
             END LOOP;
             CLOSE cur_DretTeoric;
             IF (mostrarNomsColumnes) THEN
-                RAISE NOTICE 'Dret Teòric: sense registres';
+                RAISE INFO '  Dret Teòric: sense registres';
             ELSE            
-                RAISE NOTICE '                               ---------';
-                RAISE NOTICE '  %', 
+                RAISE INFO '                                 ---------';
+                RAISE INFO '    %', 
                              LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 38, ' ');
                 IF (numTotalRegistres > 1) THEN
-                    RAISE NOTICE '  % registres.', numTotalRegistres;
+                    RAISE INFO '    % registres.', numTotalRegistres;
                 ELSE 
-                    RAISE NOTICE '  1 registre.';
+                    RAISE INFO '    1 registre.';
                 END IF;
             END IF;
         END IF;
         ----------------------------------------------
-        -- eco_dret_teoric_detall
-        ----------------------------------------------
+        -- Dades taules - eco_dret_teoric_detall
+        ----------------------------------------------        
         IF (mostrarDretTeoricDetall) THEN
-            RAISE NOTICE '';        
+            RAISE INFO '';        
             mostrarNomsColumnes := TRUE;
             numTotalRegistres := 0;
             sumaTotal1 := 0;
@@ -504,13 +841,13 @@ BEGIN
               FETCH cur_DretTeoricDetall INTO regDretTeoricDetall;	
               EXIT WHEN NOT FOUND;
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Dret Teòric Detall:';
-                    RAISE NOTICE '';
-                    RAISE NOTICE '  Id      Efecte  Data Efecte          Quantitat  Modalitat  T.Pagament'; 
-                    RAISE NOTICE '  ------  ------  -------------------  ---------  ---------  ----------  ';
+                    RAISE INFO '  Dret Teòric Detall:';
+                    RAISE INFO '';
+                    RAISE INFO '    Id      Efecte  Data Efecte          Quantitat  Modalitat  T.Pagament'; 
+                    RAISE INFO '    ------  ------  -------------------  ---------  ---------  ----------  ';
                     mostrarNomsColumnes := FALSE;
                 END IF;
-                RAISE NOTICE '  %  %  %  %  %  %', 
+                RAISE INFO '    %  %  %  %  %  %', 
                              RPAD(TO_CHAR(regDretTeoricDetall.id, 'fm9999999'), 6, ' '),               
                              RPAD(TO_CHAR(regDretTeoricDetall.efecte_moviment_id, 'fm9999999'), 6, ' '),
                              TO_CHAR(regDretTeoricDetall.data_efecte, 'DD-MM-YYYY HH24:MI:SS'),
@@ -523,24 +860,24 @@ BEGIN
             END LOOP;
             CLOSE cur_DretTeoricDetall;
             IF (mostrarNomsColumnes) THEN
-                RAISE NOTICE 'Dret Teòric Detall: sense registres';
+                RAISE INFO '  Dret Teòric Detall: sense registres';
             ELSE                        
-                RAISE NOTICE '                                       ---------';
-                RAISE NOTICE '  %', 
+                RAISE INFO '                                         ---------';
+                RAISE INFO '    %', 
                              LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 46, ' ');
                 IF (numTotalRegistres > 1) THEN
-                    RAISE NOTICE '  % registres.', numTotalRegistres;
+                    RAISE INFO '    % registres.', numTotalRegistres;
                 ELSE 
-                    RAISE NOTICE '  1 registre.';
+                    RAISE INFO '    1 registre.';
                 END IF;
             END IF;
         END IF;    
         IF (nominaId IS NOT NULL) THEN 
             ----------------------------------------------
-            -- eco_deute
+            -- Dades taules - eco_deute
             ----------------------------------------------
             IF (mostrarDeute) THEN
-                RAISE NOTICE '';        
+                RAISE INFO '';        
                 mostrarNomsColumnes := TRUE;
                 numTotalRegistres := 0;            
                 OPEN cur_Deute(nominaId);   
@@ -548,13 +885,13 @@ BEGIN
                   FETCH cur_Deute INTO regDeute;	
                   EXIT WHEN NOT FOUND;
                     IF (mostrarNomsColumnes) THEN
-                        RAISE NOTICE 'Deute:';
-                        RAISE NOTICE '';
-                        RAISE NOTICE '  Id      Data Creacio         Quantitat  Estat  Q.Negociada  Q.Condonada  Q.Aplicada  Data Pagament Inici  Data Pagament Fi'; 
-                        RAISE NOTICE '  ------  -------------------  ---------  -----  -----------  -----------  ----------  -------------------  -------------------';
+                        RAISE INFO '  Deute:';
+                        RAISE INFO '';
+                        RAISE INFO '    Id      Data Creacio         Quantitat  Estat  Q.Negociada  Q.Condonada  Q.Aplicada  Data Pagament Inici  Data Pagament Fi'; 
+                        RAISE INFO '    ------  -------------------  ---------  -----  -----------  -----------  ----------  -------------------  -------------------';
                         mostrarNomsColumnes := FALSE;
                     END IF;
-                    RAISE NOTICE '  %  %  %  %  %  %  %  %  %', 
+                    RAISE INFO '    %  %  %  %  %  %  %  %  %', 
                                  RPAD(TO_CHAR(regDeute.id, 'fm9999999'), 6, ' '),
                                  TO_CHAR(regDeute.data_creacio, 'DD-MM-YYYY HH24:MI:SS'),
                                  LPAD(TO_CHAR(regDeute.quantitat, 'fm99999990.00'), 9, ' '),
@@ -573,21 +910,21 @@ BEGIN
                 END LOOP;
                 CLOSE cur_Deute;
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Deute: sense registres';
+                    RAISE INFO '  Deute: sense registres';
                 ELSE
-                    RAISE NOTICE '';
+                    RAISE INFO '';
                     IF (numTotalRegistres > 1) THEN
-                        RAISE NOTICE '  % registres.', numTotalRegistres;
+                        RAISE INFO '    % registres.', numTotalRegistres;
                     ELSE 
-                        RAISE NOTICE '  1 registre.';
+                        RAISE INFO '    1 registre.';
                     END IF;
                 END IF;
             END IF;
             ----------------------------------------------
-            -- eco_deute_detall
-            ----------------------------------------------
+            -- Dades taules - eco_deute_detall
+            ----------------------------------------------            
             IF (mostrarDeuteDetall) THEN
-                RAISE NOTICE '';        
+                RAISE INFO '';        
                 mostrarNomsColumnes := TRUE;
                 numTotalRegistres := 0;
                 sumaTotal1 := 0;
@@ -599,13 +936,13 @@ BEGIN
                   FETCH cur_DeuteDetall INTO regDeuteDetall;	
                   EXIT WHEN NOT FOUND;
                     IF (mostrarNomsColumnes) THEN
-                        RAISE NOTICE 'Deute Detall:';
-                        RAISE NOTICE '';
-                        RAISE NOTICE '  Id      Deute   Efecte  Data Efecte          Quantitat  Q.Negociada  Q.Condonada  Q.Aplicada  Data Execució'; 
-                        RAISE NOTICE '  ------  ------  ------  -------------------  ---------  -----------  -----------  ----------  -------------------';
+                        RAISE INFO '  Deute Detall:';
+                        RAISE INFO '';
+                        RAISE INFO '    Id      Deute   Efecte  Data Efecte          Quantitat  Q.Negociada  Q.Condonada  Q.Aplicada  Data Execució'; 
+                        RAISE INFO '    ------  ------  ------  -------------------  ---------  -----------  -----------  ----------  -------------------';
                         mostrarNomsColumnes := FALSE;
                     END IF;
-                    RAISE NOTICE '  %  %  %  %  %  %  %  %  %', 
+                    RAISE INFO '    %  %  %  %  %  %  %  %  %', 
                                  RPAD(TO_CHAR(regDeuteDetall.id, 'fm9999999'), 6, ' '),
                                  RPAD(TO_CHAR(regDeuteDetall.deute_id, 'fm9999999'), 6, ' '),
                                  RPAD(TO_CHAR(regDeuteDetall.efecte_moviment_nomina_id, 'fm9999999'), 6, ' '),
@@ -635,26 +972,26 @@ BEGIN
                 END LOOP;
                 CLOSE cur_DeuteDetall;
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Deute Detall: sense registres';
+                    RAISE INFO '  Deute Detall: sense registres';
                 ELSE                    
-					RAISE NOTICE '                                               ---------  -----------  -----------  ----------';
-                    RAISE NOTICE '  %  %  %  %', 
+                    RAISE INFO '                                                 ---------  -----------  -----------  ----------';
+                    RAISE INFO '    %  %  %  %', 
                                  LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 54, ' '),
                                  LPAD(TO_CHAR(sumaTotal2, 'fm99999990.00'), 11, ' '),
                                  LPAD(TO_CHAR(sumaTotal3, 'fm99999990.00'), 11, ' '),
                                  LPAD(TO_CHAR(sumaTotal4, 'fm99999990.00'), 10, ' ');
                     IF (numTotalRegistres > 1) THEN
-                        RAISE NOTICE '  % registres.', numTotalRegistres;
+                        RAISE INFO '    % registres.', numTotalRegistres;
                     ELSE 
-                        RAISE NOTICE '  1 registre.';
+                        RAISE INFO '    1 registre.';
                     END IF;
                 END IF;
             END IF;
             ----------------------------------------------
-            -- eco_percebut
-            ----------------------------------------------
+            -- Dades taules - eco_percebut
+            ----------------------------------------------            
             IF (mostrarPercebut) THEN
-                RAISE NOTICE '';        
+                RAISE INFO '';        
                 mostrarNomsColumnes := TRUE;
                 numTotalRegistres := 0;            
                 sumaTotal1 := 0;
@@ -663,13 +1000,13 @@ BEGIN
                   FETCH cur_Percebut INTO regPercebut;	
                   EXIT WHEN NOT FOUND;
                     IF (mostrarNomsColumnes) THEN
-                        RAISE NOTICE 'Percebut:';
-                        RAISE NOTICE '';
-                        RAISE NOTICE '  Id      Rcd_Crt_Ts           Data Efecte          Imp.Percebut'; 
-                        RAISE NOTICE '  ------  -------------------  -------------------  ------------';
+                        RAISE INFO '  Percebut:';
+                        RAISE INFO '';
+                        RAISE INFO '    Id      Rcd_Crt_Ts           Data Efecte          Imp.Percebut'; 
+                        RAISE INFO '    ------  -------------------  -------------------  ------------';
                         mostrarNomsColumnes := FALSE;
                     END IF;
-                    RAISE NOTICE '  %  %  %  %', 
+                    RAISE INFO '    %  %  %  %', 
                                  RPAD(TO_CHAR(regPercebut.id, 'fm9999999'), 6, ' '),
                                  TO_CHAR(regPercebut.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'),
                                  TO_CHAR(regPercebut.data_efecte, 'DD-MM-YYYY HH24:MI:SS'),
@@ -679,23 +1016,23 @@ BEGIN
                 END LOOP;
                 CLOSE cur_Percebut;            
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Percebut: sense registres';
+                    RAISE INFO '  Percebut: sense registres';
                 ELSE                        
-                    RAISE NOTICE '                                                    ------------';
-                    RAISE NOTICE '  %', 
+                    RAISE INFO '                                                      ------------';
+                    RAISE INFO '    %', 
                                  LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 62, ' ');
                     IF (numTotalRegistres > 1) THEN
-                        RAISE NOTICE '  % registres.', numTotalRegistres;
+                        RAISE INFO '    % registres.', numTotalRegistres;
                     ELSE 
-                        RAISE NOTICE '  1 registre.';
+                        RAISE INFO '    1 registre.';
                     END IF;
                 END IF;
             END IF;
             ----------------------------------------------
-            -- eco_percebut_detall
-            ----------------------------------------------
+            -- Dades taules - eco_percebut_detall
+            ----------------------------------------------            
             IF (mostrarPercebutDetall) THEN
-                RAISE NOTICE '';        
+                RAISE INFO '';        
                 mostrarNomsColumnes := TRUE;
                 numTotalRegistres := 0;
                 sumaTotal1 := 0;            
@@ -704,13 +1041,13 @@ BEGIN
                   FETCH cur_PercebutDetall INTO regPercebutDetall;	
                   EXIT WHEN NOT FOUND;
                     IF (mostrarNomsColumnes) THEN
-                        RAISE NOTICE 'Percebut Detall:';
-                        RAISE NOTICE '';
-                        RAISE NOTICE '  Id      Act.Detall  Data Efecte          Quantitat  Modalitat  T.Pagament  Data Execució'; 
-                        RAISE NOTICE '  ------  ----------  -------------------  ---------  ---------  ----------  -------------------';
+                        RAISE INFO '  Percebut Detall:';
+                        RAISE INFO '';
+                        RAISE INFO '    Id      Act.Detall  Data Efecte          Quantitat  Modalitat  T.Pagament  Data Execució'; 
+                        RAISE INFO '    ------  ----------  -------------------  ---------  ---------  ----------  -------------------';
                         mostrarNomsColumnes := FALSE;
                     END IF;
-                    RAISE NOTICE '  %  %  %  %  %  %  %', 
+                    RAISE INFO '    %  %  %  %  %  %  %', 
                                  RPAD(TO_CHAR(regPercebutDetall.id, 'fm9999999'), 6, ' '),
                                  RPAD(TO_CHAR(regPercebutDetall.activitat_detall_id, 'fm9999999'), 10, ' '),                             
                                  TO_CHAR(regPercebutDetall.data_efecte, 'DD-MM-YYYY HH24:MI:SS'),
@@ -724,23 +1061,23 @@ BEGIN
                 END LOOP;
                 CLOSE cur_PercebutDetall;            
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Percebut Detall: sense registres';
+                    RAISE INFO '  Percebut Detall: sense registres';
                 ELSE                                        
-                    RAISE NOTICE '                                           ---------';
-                    RAISE NOTICE '  %',
-                                 LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 50, ' ');
+                    RAISE INFO '                                             ---------';
+                    RAISE INFO '      %',
+                                 LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 48, ' ');
                     IF (numTotalRegistres > 1) THEN
-                        RAISE NOTICE '  % registres.', numTotalRegistres;
+                        RAISE INFO '    % registres.', numTotalRegistres;
                     ELSE 
-                        RAISE NOTICE '  1 registre.';
+                        RAISE INFO '    1 registre.';
                     END IF;
                 END IF;
             END IF;
             ----------------------------------------------
-            -- eco_ordenacio_pagament
-            ----------------------------------------------
+            -- Dades taules - eco_ordenacio_pagament
+            ----------------------------------------------            
             IF (mostrarOrdenacioPagament) THEN
-                RAISE NOTICE '';        
+                RAISE INFO '';        
                 mostrarNomsColumnes := TRUE;
                 numTotalRegistres := 0;            
                 sumaTotal1 := 0;
@@ -749,39 +1086,39 @@ BEGIN
                   FETCH cur_OrdenacioPagament INTO regOrdenacioPagament;	
                   EXIT WHEN NOT FOUND;
                     IF (mostrarNomsColumnes) THEN
-                        RAISE NOTICE 'Ordenació Pagament:';
-                        RAISE NOTICE '';
-                        RAISE NOTICE '  Id      Rcd_Crt_Ts           N.Mensual  Quantitat'; 
-                        RAISE NOTICE '  ------  -------------------  ---------  ---------';
+                        RAISE INFO '  Ordenació Pagament:';
+                        RAISE INFO '';
+                        RAISE INFO '    Id      Rcd_Crt_Ts           N.Mensual  Quantitat'; 
+                        RAISE INFO '    ------  -------------------  ---------  ---------';
                         mostrarNomsColumnes := FALSE;
                     END IF;
-                    RAISE NOTICE '  %  %  %  %', 
+                    RAISE INFO '    %  %  %  %', 
                                  RPAD(TO_CHAR(regOrdenacioPagament.id, 'fm9999999'), 6, ' '),
                                  TO_CHAR(regOrdenacioPagament.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'),                             
                                  RPAD(TO_CHAR(regOrdenacioPagament.nomina_mensual_id, 'fm9999999'), 9, ' '),
-                                 LPAD(TO_CHAR(regOrdenacioPagament.quantitat, 'fm99999990.00'), 8, ' ');
+                                 LPAD(TO_CHAR(regOrdenacioPagament.quantitat, 'fm99999990.00'), 9, ' ');
                     sumaTotal1 := sumaTotal1 + regOrdenacioPagament.quantitat;
                     numTotalRegistres := numTotalRegistres + 1;
                 END LOOP;
                 CLOSE cur_OrdenacioPagament; 
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Ordenació Pagament: sense registres';
+                    RAISE INFO '  Ordenació Pagament: sense registres';
                 ELSE                                        
-                    RAISE NOTICE '                                          ---------';
-                    RAISE NOTICE '  %',
-                                 LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 48, ' ');
+                    RAISE INFO '                                            ---------';
+                    RAISE INFO '    %',
+                                 LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 49, ' ');
                     IF (numTotalRegistres > 1) THEN
-                        RAISE NOTICE '  % registres.', numTotalRegistres;
+                        RAISE INFO '    % registres.', numTotalRegistres;
                     ELSE 
-                        RAISE NOTICE '  1 registre.';
+                        RAISE INFO '    1 registre.';
                     END IF;                             
                 END IF;
             END IF;
             ----------------------------------------------
-            -- eco_ordenacio_pagament_detall
-            ----------------------------------------------
+            -- Dades taules - eco_ordenacio_pagament_detall
+            ----------------------------------------------            
             IF (mostrarOrdenacioPagamentDetall) THEN
-                RAISE NOTICE '';        
+                RAISE INFO '';        
                 mostrarNomsColumnes := TRUE;
                 numTotalRegistres := 0;
                 sumaTotal1 := 0;
@@ -790,13 +1127,13 @@ BEGIN
                   FETCH cur_OrdenacioPagamentDetall INTO regOrdenacioPagamentDetall;	
                   EXIT WHEN NOT FOUND;
                     IF (mostrarNomsColumnes) THEN
-                        RAISE NOTICE 'Ordenació Pagament Detall:';
-                        RAISE NOTICE '';
-                        RAISE NOTICE '  Id      Rcd_Crt_Ts           N.Mensual  Quantitat  Act.Detall'; 
-                        RAISE NOTICE '  ------  -------------------  ---------  ---------  ----------';
+                        RAISE INFO '  Ordenació Pagament Detall:';
+                        RAISE INFO '';
+                        RAISE INFO '    Id      Rcd_Crt_Ts           N.Mensual  Quantitat  Act.Detall'; 
+                        RAISE INFO '    ------  -------------------  ---------  ---------  ----------';
                         mostrarNomsColumnes := FALSE;
                     END IF;
-                    RAISE NOTICE '  %  %  %  %  %', 
+                    RAISE INFO '    %  %  %  %  %', 
                                  RPAD(TO_CHAR(regOrdenacioPagamentDetall.id, 'fm9999999'), 6, ' '),
                                  TO_CHAR(regOrdenacioPagamentDetall.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'),                             
                                  RPAD(TO_CHAR(regOrdenacioPagamentDetall.nomina_mensual_id, 'fm9999999'), 9, ' '),
@@ -807,23 +1144,23 @@ BEGIN
                 END LOOP;
                 CLOSE cur_OrdenacioPagamentDetall;
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Ordenació Pagament Detall: sense registres';
+                    RAISE INFO '  Ordenació Pagament Detall: sense registres';
                 ELSE                                        
-                    RAISE NOTICE '                                          ---------';
-                    RAISE NOTICE '  %',
+                    RAISE INFO '                                            ---------';
+                    RAISE INFO '    %',
                                  LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 49, ' ');
                     IF (numTotalRegistres > 1) THEN
-                        RAISE NOTICE '  % registres.', numTotalRegistres;
+                        RAISE INFO '    % registres.', numTotalRegistres;
                     ELSE 
-                        RAISE NOTICE '  1 registre.';
+                        RAISE INFO '    1 registre.';
                     END IF;
                 END IF;
             END IF;
             ----------------------------------------------
-            -- eco_liquidat
+            -- Dades taules - eco_liquidat
             ----------------------------------------------
-            IF (mostrarOrdenacioLiquidat) THEN
-                RAISE NOTICE '';        
+            IF (mostrarLiquidat) THEN
+                RAISE INFO '';        
                 mostrarNomsColumnes := TRUE;
                 numTotalRegistres := 0;
                 sumaTotal1 := 0;            
@@ -832,13 +1169,13 @@ BEGIN
                   FETCH cur_Liquidat INTO regLiquidat;	
                   EXIT WHEN NOT FOUND;
                     IF (mostrarNomsColumnes) THEN
-                        RAISE NOTICE 'Liquidat:';
-                        RAISE NOTICE '';
-                        RAISE NOTICE '  Id      Ord.Pagament  Data Període         Data Execució        Data Efecte          Quantitat'; 
-                        RAISE NOTICE '  ------  ------------  -------------------  -------------------  -------------------  ---------';
+                        RAISE INFO '  Liquidat:';
+                        RAISE INFO '';
+                        RAISE INFO '    Id      Ord.Pagament  Data Període         Data Execució        Data Efecte          Quantitat'; 
+                        RAISE INFO '    ------  ------------  -------------------  -------------------  -------------------  ---------';
                         mostrarNomsColumnes := FALSE;
                     END IF;
-                    RAISE NOTICE '  %  %  %  %  %  %', 
+                    RAISE INFO '    %  %  %  %  %  %', 
                                  RPAD(TO_CHAR(regLiquidat.id, 'fm9999999'), 6, ' '),
                                  RPAD(TO_CHAR(regLiquidat.ordenacio_pagament_id, 'fm9999999'), 12, ' '),
                                  TO_CHAR(regLiquidat.data_periode, 'DD-MM-YYYY HH24:MI:SS'),
@@ -850,21 +1187,25 @@ BEGIN
                 END LOOP;
                 CLOSE cur_Liquidat;
                 IF (mostrarNomsColumnes) THEN
-                    RAISE NOTICE 'Liquidat: sense registres';
+                    RAISE INFO '  Liquidat: sense registres';
                 ELSE                                        
-                    RAISE NOTICE '                                                                                       ---------';
-                    RAISE NOTICE '  %',
+                    RAISE INFO '                                                                                         ---------';
+                    RAISE INFO '    %',
                                  LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 94, ' ');
                     IF (numTotalRegistres > 1) THEN
-                        RAISE NOTICE '  % registres.', numTotalRegistres;
+                        RAISE INFO '    % registres.', numTotalRegistres;
                     ELSE 
-                        RAISE NOTICE '  1 registre.';
+                        RAISE INFO '    1 registre.';
                     END IF;
                 END IF;
             END IF;
-        END IF;       
+        END IF;
     END IF;
-    RAISE NOTICE '';
-    RAISE NOTICE '----------------------------------------------------------------------------------------------------------------------------';
+	IF NOT (mostrarInformaciSituacio OR mostrarResumImportsTaules OR mostrarDadesTaules) THEN
+		RAISE INFO 'ATENCIÓ: S''ha desactivat la visualització de totes les dades';
+	ELSE 
+		RAISE INFO '';
+	END IF;	
+    RAISE INFO '----------------------------------------------------------------------------------------------------------------------------';
 END;
 $$;
