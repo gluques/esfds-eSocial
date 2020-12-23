@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------------------------
---	PAYROLL PERFORMANCE INFORMATION - gPPI v.2.0 release 20200720												   --	
+--	PAYROLL PERFORMANCE INFORMATION - gPPI v.2.1 release 20200720												   --	
 --  						  																					   --	
 --																						   						   --	
 --  Created by Gregorio Luque Serrano for DXC.	   								   		   © eSocial DXC Software  --
@@ -42,7 +42,7 @@ DECLARE
     cur_Activitat CURSOR(p_idDret INTEGER) FOR
 		SELECT * FROM eco_activitat WHERE dret_id = p_idDret ORDER BY moviment_id, data_efecte_inicial, id;        
     cur_ActivitatDetall CURSOR(p_idNomina INTEGER) FOR
-		SELECT * FROM eco_activitat_detall WHERE nomina_id = p_idNomina ORDER BY nomina_mensual_id, data_efecte, id;        
+		SELECT * FROM eco_activitat_detall WHERE nomina_id = p_idNomina ORDER BY nomina_mensual_id, activitat_id, data_efecte, id;        
     cur_DretTeoric CURSOR(p_idDret INTEGER) FOR
 		SELECT * FROM eco_dret_teoric WHERE dret_id = p_idDret ORDER BY data_efecte, id;
     cur_DretTeoricDetall CURSOR(p_idDret INTEGER) FOR
@@ -93,7 +93,7 @@ BEGIN
     SELECT epr.persona_id, epr.numero_expedient INTO personaId, numeroExpedient FROM expedient_prestacio epr WHERE id = expedientPrestacioId;
     SELECT dre.nomina_id INTO nominaId FROM eco_dret dre WHERE id = dretId;
     RAISE NOTICE '----------------------------------------------------------------------------------------------------------------------------';
-	RAISE NOTICE ' Script eSocial gPPI v.2.0 release 20200720';
+	RAISE NOTICE ' Script eSocial gPPI v.2.1 release 20200720';
     RAISE NOTICE '';
     RAISE NOTICE ' Payroll Performance Information created by gluques.';    
     RAISE NOTICE ' (c) 2020 - eSocial DXC Software.';
