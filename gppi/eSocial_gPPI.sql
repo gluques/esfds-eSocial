@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------------------------
---	PAYROLL PERFORMANCE INFORMATION - gPPI v.2.2 release 20200730												   --	
+--	PAYROLL PERFORMANCE INFORMATION - gPPI v.3.0 release 20200803												   --	
 --  						  																					   --	
 --																						   						   --	
 --  Created by Gregorio Luque Serrano for DXC.	   								   		   © eSocial DXC Software  --
@@ -10,7 +10,9 @@ SET search_path TO esocial;
 DO $$
 DECLARE
     -- Configurable parameters -------------------
-    prestacioId INTEGER := 613;
+    prestacioId INTEGER := 613;                 -- Ex. 613;
+    dretId INTEGER := NULL;                     -- Ex. 172;
+	numeroExpedient TEXT := NULL;  				-- Ex. '00006/2020/1003';
     mostrarPrestacioReserva BOOLEAN := TRUE;
     mostrarDretReserva BOOLEAN := TRUE;
     mostrarMoviment BOOLEAN := TRUE;
@@ -78,11 +80,9 @@ DECLARE
     regOrdenacioPagament eco_ordenacio_pagament%ROWTYPE;
     regOrdenacioPagamentDetall eco_ordenacio_pagament_detall%ROWTYPE;
     regLiquidat eco_liquidat%ROWTYPE;
-    dretId INTEGER;
     expedientPrestacioId INTEGER;
     personaId INTEGER;
     nominaId INTEGER;
-    numeroExpedient TEXT;
     mostrarNomsColumnes BOOLEAN;
     posicio INTEGER;
     sumaTotal1 DECIMAL; 
@@ -91,11 +91,30 @@ DECLARE
     sumaTotal4 DECIMAL;
     numTotalRegistres INTEGER;
 BEGIN
+    IF prestacioId IS NULL AND dretId IS NULL AND numeroExpedient IS NULL THEN
+        RAISE EXCEPTION 'No s''''ha indicat cap paràmetre'; 
+    END IF;
+    IF prestacioId IS NULL THEN
+        IF dretId IS NOT NULL THEN
+            SELECT id INTO prestacioId FROM prestacio WHERE dret_id = dretId;
+            IF prestacioId IS NULL THEN 
+                RAISE EXCEPTION 'No és possible obtenir la prestació associada a el dret indicat';
+            END IF;            
+        ELSE
+            SELECT id INTO expedientPrestacioId FROM expedient_prestacio WHERE numero_expedient = numeroExpedient;
+            IF expedientPrestacioId IS NOT NULL THEN
+                SELECT id INTO prestacioId FROM prestacio WHERE expedient_prestacio_id = expedientPrestacioId;
+            END IF;
+            IF prestacioId IS NULL THEN
+                RAISE EXCEPTION 'No és possible obtenir la prestació associada a el número d''''expedient indicat';
+            END IF;
+        END IF;
+    END IF;
     SELECT pre.dret_id, pre.expedient_prestacio_id INTO dretId, expedientPrestacioId FROM prestacio pre WHERE id = prestacioId;
     SELECT epr.persona_id, epr.numero_expedient INTO personaId, numeroExpedient FROM expedient_prestacio epr WHERE id = expedientPrestacioId;
     SELECT dre.nomina_id INTO nominaId FROM eco_dret dre WHERE id = dretId;
     RAISE NOTICE '----------------------------------------------------------------------------------------------------------------------------';
-	RAISE NOTICE ' Script eSocial gPPI v.2.1 release 20200720';
+	RAISE NOTICE ' Script eSocial gPPI v.3.0 release 20200803';
     RAISE NOTICE '';
     RAISE NOTICE ' Payroll Performance Information created by gluques.';    
     RAISE NOTICE ' (c) 2020 - eSocial DXC Software.';
