@@ -1,6 +1,6 @@
-# esfds-PSQL-gPPI
-## PAYROLL PERFORMANCE INFORMATION - gPPI
-### Created by *Gregorio Luque Serrano* for eSocial - ESFDS.
+## gPFI - Payroll Performance Information
+
+Created by gluques.  
 Barcelona, July 10, 2020.
 
 #### Historial de versiones
@@ -62,7 +62,7 @@ Barcelona, July 10, 2020.
                     - Informació de situació nomina mensual                    
                     - Resum imports taules
                     
-    21/09/2020  Evitar que se muestre información cuando indico una prestación que no dispone de Dret.
+    21/09/2020  Evitar que se muestre información cuando indico una prestación que no dispone de Dret.  Versión 4.1
 
     
        
