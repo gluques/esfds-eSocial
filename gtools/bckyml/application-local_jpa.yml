@@ -1,0 +1,21 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/gluques?currentSchema=esocial
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver
+    tomcat:
+      max-active: 100
+      min-idle: 10
+      initial-size: 10
+      max-idle: 100
+      test-on-borrow: true
+      validation-query: SELECT 1
+      test-while-idle: true
+
+camunda:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/gluques?currentSchema=esocial
+    username: postgres
+    password: postgres
+    driver-class-name: org.postgresql.Driver

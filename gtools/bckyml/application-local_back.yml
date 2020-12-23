@@ -1,0 +1,216 @@
+
+camunda.bpm:
+  admin-user:
+    id: admin
+    password: admin
+    firstName: admin
+  filter:
+    create: All tasks
+  process-engine-name: localEngine
+  authorization:
+    enabled: true
+  history-level: audit
+  configuration: org.camunda.bpm.engine.impl.cfg.StandaloneProcessEngineConfiguration
+  database:
+    schema-update: true
+    type: postgres
+
+camunda.bpm.job-execution:
+  core-pool-size: 50
+  max-pool-size: 100
+  queue-size: 50
+  max-jobs-per-acquisition: 100
+
+requeriment:
+  dies-marge: mes_mes_1
+
+corticon:
+  url:  http://lclaari00.cpd1pre.intranet.gencat.cat:8850/axis/corticon/execute
+  #url: http://localhost:8850/axis/corticon/execute
+  #url: http://esocial-corticon.swarm.net/axis/corticon/execute
+
+  serveis:
+    automatisme: eSocial-Automatisme
+    filtratge: eSocial-Filtratge
+    filtratge-estudi: eSocial-Filtratge-Estudi
+    filtratge-proposta: eSocial-Filtratge-Proposta
+    risc: eSocial-RiscIntervencio
+    supervisio-estudi: eSocial-Supervisio-Estudi
+    supervisio-proposta: eSocial-Supervisio-Proposta
+    verificacio: eSocial-Verificacio
+    analisi: eSocial-Analisi-Informacio
+    calcul: eSocial-CalculPrestacio
+    elegibilitat: eSocial-Elegibilitat
+    prioritzacio: eSocial-Prioritzacio
+    prioritzacio-estudi: eSocial-Prioritzacio-Estudi
+    prioritzacio-proposta: eSocial-Prioritzacio-Proposta
+    incompatibilitats: eSocial-Incompatibilitats
+    filtres-supervisio: eSocial-Filtres-Supervisio
+    analisi-requeriment-elegibilitat-calcul: eSocial-AnaReqEleCal
+    # analisi-requeriment-elegibilitat-calcul: eSocial-AnaReqEleCal-PNCI
+    verificar-dates-efecte: eSocial-DataEfecte
+    resolucio-recurs: eSocial-Resolucio-Recurs
+    revisio-ofici: eSocial-Resolucio-RevisioOfici
+    dades-pagues-extra: eSocial-DadesNecessaries-PaguesExtra
+    dades-pagues-extra-periodes: eSocial-Calcul-PaguesExtra 
+   
+
+
+#jdbc:sqlserver://CLTDMLOB-AGL.res.root.sabercorp.com:1433;databaseName=CLRTY_SB1;sendStringParametersAsUnicode=false;integratedSecurity=false
+#path: C:/data/taulat/Code/workspace/gencat-poc/backend/src/main/resources/jclarety_properties.txt
+
+logging:
+  level:
+    root: INFO
+    org:
+      hibernate: ERROR
+      camunda:
+        bpm:
+          engine:
+            impl:
+              persistence:
+                entity:
+                  JobEntity: ERROR
+            jobexecutor: ERROR
+    cat:
+      gencat:
+        acps:
+          esocial:
+            empleat: DEBUG
+  path: C:/temp/log
+
+config:
+  key: local
+
+interop:
+  #iSeriesService: http://interop.swarm.net/backend-interop/iSeriesService
+  iSeriesService: http://localhost:8240/backend-interop/iSeriesService
+  signadorService: http://localhost:8240/backend-interop/signadorService
+  #signadorService: http://interop.swarm.net/backend-interop/signadorService
+  #signadorService: http://localhost:9997/backend-interop/signadorService
+  #dSocialService: http://localhost:9997/backend-interop/dSocialService
+  dSocialService: http://localhost:8240/backend-interop/dSocialService
+pics:
+  padro:
+    padroService: http://localhost:8240/backend-pics/padroService
+    #padroService: http://pics.swarm.net/backend-pics/padroService
+  dni:
+    dniService: http://localhost:8240/backend-pics/dniService
+    #dniService: http://pics.swarm.net/backend-pics/dniService
+  inss:
+    inssService: http://localhost:8240/backend-pics/inssService
+    #inssService: http://pics.swarm.net/backend-pics/inssService
+  aeat:
+    aeatService: http://localhost:8240/backend-pics/aeatService
+    #aeatService: http://pics.swarm.net/backend-pics/aeatService
+  cadastre:
+    cadastreService: http://localhost:8240/backend-pics/cadastreService
+    #cadastreService: http://pics.swarm.net/backend-pics/cadastreService
+  tgss:
+    #tgssService: http://pics.swarm.net/backend-pics/tgssService
+    #tgssService: http://localhost:8240/backend-pics/tgssService
+    tgssService: http://localhost:8240/backend-pics/tgssService
+  registreCivil:
+    #registreCivilService: http://localhost:8240/backend-pics/registreCivilService
+    registreCivilService: http://localhost:8240/backend-pics/registreCivilService
+
+pica:
+  vidalaboral:
+    vidaLaboralService: http://localhost:8240/backend-pica/vidaLaboralService
+  aeat:
+    aeatService: http://localhost:8240/backend-pica/aeatService
+  sarcat:
+    #sarcatService: http://localhost:9999/backend-pica/sarcatService
+    #sarcatService: http://pica.swarm.net/backend-pica/sarcatService
+    sarcatService: http://localhost:8240/backend-pica/sarcatService
+  enotum:
+    #enotumService: http://localhost:9999/backend-pica/enotumService
+    enotumService: http://localhost:8240/backend-pica/enotumService
+    #enotumService: http://pica.swarm.net/backend-pica/enotumService
+  eformularis:
+    #eFormularisService: http://pica.swarm.net/backend-pica/eFormularisService
+    eFormularisService: http://localhost:8240/backend-pica/eFormularisService
+    #eFormularisService: http://localhost:9999/backend-pica/eFormularisService
+  gsit:
+    #gsitService: http://localhost:9999/backend-pica/gsitService
+    gsitService: http://localhost:8240/backend-pica/gsitService
+    #gsitService: http://pica.swarm.net/backend-pica/gsitService
+  psis:
+    #psisService: http://localhost:9999/backend-pica/psisService
+    psisService: http://localhost:8240/backend-pica/psisService
+    #psisService: http://pica.swarm.net/backend-pica/psisService
+  ecopia:
+    ecopiaService: http://localhost:8240/backend-pica/ecopiaService
+    #ecopiaService: http://pica.swarm.net/backend-pica/ecopiaService
+    #ecopiaService: http://localhost:9999/backend-pica/ecopiaService
+  inem:
+    inemService: http://localhost:8240/backend-pica/inemService
+  estrangeria:
+    estrangeriaService: http://localhost:8240/backend-pica/estrangeriaService
+
+
+gicar:
+  active: false
+
+
+application:
+  version: 1.0.0
+
+links:
+  requeriments: http://localhost:4200/consultaRequeriment/
+
+esocial:
+  batch:
+    server: 127.0.0.1
+  integrations:
+    segell:
+      namefiles:
+        resolucioDenegatoria: notificacio_resolucio_denegatoria
+        resolucioAprovatoria: notificacio_resolucio_aprovatoria
+        notificacioRequeriment: notificacio_requeriment
+        comprovantSegonaInstancia: comprovant_recurs
+        comprovantRespostaRequeriment: comprovant_requeriment
+        comprovantSolicitud: comprovant_solicitud
+        resolucioEstimatoria: resolucio_estimatoria
+        resolucioDesestimatoria: resolucio_desestimatoria
+        resolucioRevisioOficiConfirmativa: resolucio_rev_ofici_confirmativa
+        resolucioRevisioOficiModificativa: resolucio_rev_ofici_modificativa
+        resolucioRevisioOficiExtincio: resolucio_rev_ofici_extintiva
+        comprovantAudiencia: notificacio_rev_ofici
+        notificacioRequerimentRevOfici: notificacio_requeriment_rev_ofici
+        comprovantRespostaRequerimentRevOfici: comprovant_requeriment_rev_ofici
+        comprovantSegonaInstanciaReclamacio: comprovant_reclamacio
+      parameters:
+        doc_format: PDF
+        doc_type: 5
+        doc_sufix: _segellat.pdf
+        signatura: 1309513038303131373541
+        visible: true
+    ecopia:
+      parameters:
+        doc_type: 6
+        doc_sufix: _segellat_ecopia.pdf
+        doc_id: 1
+    correos:
+      parameters:
+        doc_format_xml: XML
+        doc_type_xml: 14
+        doc_sufix_xml: _peeDocument.xml
+        doc_format: PDF
+        doc_type: 15
+        doc_sufix: _peeDocument.pdf
+        #url_mgn: http://localhost:8080/mgn/camel/service
+        url_mgn: http://localhost:8240/mgn/camel/service
+        originId: 2
+        originDescription: tsocial_portal
+
+#Variable temporal que permite hacer reclamaciones sobre una PNC
+actiuPncReclamacio: true
+
+#Tipos expedientes que no pueden hacer Revisiones Ofici o Recurs/Reclamacio
+bannedProceedings:
+  revisioOfici:
+  recursReclamacio:
+
+#Variable para comprobar fecha de infant.
+controlDataInfant: 01/07/2020
