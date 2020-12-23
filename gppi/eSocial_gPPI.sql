@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------------------------
---	PAYROLL PERFORMANCE INFORMATION - gPPI v.1.0 release 20200710												   --	
+--	PAYROLL PERFORMANCE INFORMATION - gPPI v.1.1 release 20200713												   --	
 --  						  																					   --	
 --																						   						   --	
 --  Created by Gregorio Luque Serrano for DXC.	   								   		   © eSocial DXC Software  --
@@ -16,6 +16,10 @@ DECLARE
 		SELECT * FROM eco_prestacio_reserva WHERE prestacio_id = p_idPrestacio ORDER BY data_reserva, id;    
     cur_DretReserva CURSOR(p_idDret INTEGER) FOR
 		SELECT * FROM eco_dret_reserva WHERE dret_id = p_idDret ORDER BY id;        
+    cur_Moviment CURSOR(p_idNomina INTEGER) FOR
+        SELECT * FROM eco_moviment WHERE id IN (SELECT DISTINCT moviment_id FROM eco_moviment_detall WHERE nomina_id = p_idNomina);    
+    cur_Moviment_Detall CURSOR(p_idNomina INTEGER) FOR
+        SELECT * FROM eco_moviment_detall WHERE nomina_id = p_idNomina ORDER BY moviment_id, data_efecte_inicial, id;        
     cur_EfecteMovimentNomina CURSOR(p_idDret INTEGER) FOR
 		SELECT * FROM eco_efecte_moviment_nomina WHERE dret_id = p_idDret ORDER BY moviment_detall_id, data_efecte_inici, id;    
     cur_Activitat CURSOR(p_idDret INTEGER) FOR
@@ -36,6 +40,8 @@ DECLARE
 		SELECT * FROM eco_percebut_detall WHERE nomina_id = p_idNomina ORDER BY data_efecte, id;                
     regPrestacioReserva	eco_prestacio_reserva%ROWTYPE;
     regDretReserva eco_dret_reserva%ROWTYPE;
+    regMoviment eco_moviment%ROWTYPE;
+    regMovimentDetall eco_moviment_detall%ROWTYPE;
     regEfecteMovimentNomina eco_efecte_moviment_nomina%ROWTYPE;
     regActivitat eco_activitat%ROWTYPE;
     regActivitatDetall eco_activitat_detall%ROWTYPE;
@@ -51,12 +57,13 @@ DECLARE
     nominaId INTEGER;
     numeroExpedient TEXT;
     mostrarNomsColumnes BOOLEAN;
+    posicio INTEGER;
 BEGIN
     SELECT pre.dret_id, pre.expedient_prestacio_id INTO dretId, expedientPrestacioId FROM prestacio pre WHERE id = prestacioId;
     SELECT epr.persona_id, epr.numero_expedient INTO personaId, numeroExpedient FROM expedient_prestacio epr WHERE id = expedientPrestacioId;
     SELECT dre.nomina_id INTO nominaId FROM eco_dret dre WHERE id = dretId;
     RAISE NOTICE '----------------------------------------------------------------------------------------------------------------------------';
-	RAISE NOTICE ' Script eSocial gPPI v.1.0 release 20200710';
+	RAISE NOTICE ' Script eSocial gPPI v.1.1 release 20200713';
     RAISE NOTICE '';
     RAISE NOTICE ' Payroll Performance Information created by gluques.';    
     RAISE NOTICE ' (c) 2020 - eSocial DXC Software.';
@@ -124,6 +131,86 @@ BEGIN
         CLOSE cur_DretReserva;
         IF (mostrarNomsColumnes) THEN
             RAISE NOTICE 'Dret Reserva: sense registres';
+        END IF;
+        IF (nominaId IS NOT NULL) THEN 
+            ----------------------------------------------
+            -- eco_moviment
+            ----------------------------------------------
+            RAISE NOTICE '';        
+            mostrarNomsColumnes := TRUE;
+            OPEN cur_Moviment(nominaId);
+            LOOP	
+              FETCH cur_Moviment INTO regMoviment;	
+              EXIT WHEN NOT FOUND;
+                IF (mostrarNomsColumnes) THEN
+                    RAISE NOTICE 'Moviment:';
+                    RAISE NOTICE '';
+                    RAISE NOTICE '  Id      Expedient  Procediment  Tramit  Data creació         Estat '; 
+                    RAISE NOTICE '  ------  ---------  -----------  ------  -------------------  ------------';
+                    mostrarNomsColumnes := FALSE;
+                END IF;
+                RAISE NOTICE '  %  %  %  %  %  %', 
+                             RPAD(TO_CHAR(regMoviment.id, 'fm9999999'), 6, ' '), 
+                             RPAD(TO_CHAR(regMoviment.expedient_id, 'fm999999'), 9, ' '),
+                             RPAD(TO_CHAR(regMoviment.procediment_id, 'fm999999'), 11, ' '),
+                             RPAD(TO_CHAR(regMoviment.tramit_id, 'fm999999'), 6, ' '),
+                             TO_CHAR(regMoviment.data_creacio_moviment, 'DD-MM-YYYY HH24:MI:SS'),
+                             regMoviment.estat_moviment;
+            END LOOP;
+            CLOSE cur_Moviment;            
+            IF (mostrarNomsColumnes) THEN
+                RAISE NOTICE 'Moviment: sense registres';
+            ELSE                 
+                OPEN cur_Moviment(nominaId);
+                LOOP	
+                  FETCH cur_Moviment INTO regMoviment;
+				  EXIT WHEN NOT FOUND;
+				  	RAISE NOTICE '';
+                    RAISE NOTICE '  Contingut Moviment..: %', regMoviment.id;
+					RAISE NOTICE '';
+                    posicio := 1;
+                    WHILE (posicio < character_length(regMoviment.contingut_moviment)) LOOP
+                        IF ((posicio + 79) > character_length(regMoviment.contingut_moviment)) THEN
+                            RAISE NOTICE '        %', substring(regMoviment.contingut_moviment FROM posicio FOR character_length(regMoviment.contingut_moviment));
+                        ELSE
+                            RAISE NOTICE '        %', substring(regMoviment.contingut_moviment FROM posicio FOR 79);
+                        END IF;
+                        posicio := posicio + 79;
+                    END LOOP;
+                  EXIT WHEN NOT FOUND;
+                END LOOP;
+                CLOSE cur_Moviment;
+            END IF;
+            ----------------------------------------------
+            -- eco_moviment_detall
+            ----------------------------------------------
+            RAISE NOTICE '';        
+            mostrarNomsColumnes := TRUE;            
+            OPEN cur_Moviment_Detall(nominaId);
+            LOOP	
+              FETCH cur_Moviment_Detall INTO regMovimentDetall;	
+              EXIT WHEN NOT FOUND;
+                IF (mostrarNomsColumnes) THEN
+                    RAISE NOTICE 'Moviment Detall:';
+                    RAISE NOTICE '';
+                    RAISE NOTICE '  Id      Rcd_Crt_Ts           Moviment  Data Efecte Inicial  Data Efecte Final    Import    '; 
+                    RAISE NOTICE '  ------  -------------------  --------  -------------------  -------------------  ----------';
+                    mostrarNomsColumnes := FALSE;
+                END IF;
+                RAISE NOTICE '  %  %  %  %  %  %', 
+                             RPAD(TO_CHAR(regMovimentDetall.id, 'fm9999999'), 6, ' '), 
+                             TO_CHAR(regMovimentDetall.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'),
+                             RPAD(TO_CHAR(regMovimentDetall.moviment_id, 'fm9999999'), 8, ' '),
+                             TO_CHAR(regMovimentDetall.data_efecte_inicial, 'DD-MM-YYYY HH24:MI:SS'),
+                             TO_CHAR(regMovimentDetall.data_efecte_final, 'DD-MM-YYYY HH24:MI:SS'),
+							 CASE WHEN regMovimentDetall.data_efecte_final IS NULL 
+							 	THEN LPAD(TO_CHAR(regMovimentDetall.import_moviment, 'fm99999990.00'), 19, ' ') 
+                            	ELSE TO_CHAR(regMovimentDetall.import_moviment, 'fm99999990.00') END;                             
+            END LOOP;
+            CLOSE cur_Moviment_Detall;            
+            IF (mostrarNomsColumnes) THEN
+                RAISE NOTICE 'Moviment Detall: sense registres';
+            END IF;            
         END IF;
         ----------------------------------------------
         -- eco_efecte_moviment_nomina
@@ -345,7 +432,7 @@ BEGIN
             END LOOP;
             CLOSE cur_DeuteDetall;
             IF (mostrarNomsColumnes) THEN
-                RAISE NOTICE 'Dret Detall: sense registres';
+                RAISE NOTICE 'Deute Detall: sense registres';
             END IF;
             ----------------------------------------------
             -- eco_percebut
@@ -409,5 +496,3 @@ BEGIN
     RAISE NOTICE '----------------------------------------------------------------------------------------------------------------------------';
 END;
 $$;
-
-
