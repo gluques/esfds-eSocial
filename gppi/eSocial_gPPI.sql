@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------------------------
---	PAYROLL PERFORMANCE INFORMATION - gPPI v.3.0 release 20200803												   --	
+--	PAYROLL PERFORMANCE INFORMATION - gPPI v.3.1 release 20200904												   --	
 --  						  																					   --	
 --																						   						   --	
 --  Created by Gregorio Luque Serrano for DXC.	   								   		   © eSocial DXC Software  --
@@ -114,7 +114,7 @@ BEGIN
     SELECT epr.persona_id, epr.numero_expedient INTO personaId, numeroExpedient FROM expedient_prestacio epr WHERE id = expedientPrestacioId;
     SELECT dre.nomina_id INTO nominaId FROM eco_dret dre WHERE id = dretId;
     RAISE NOTICE '----------------------------------------------------------------------------------------------------------------------------';
-	RAISE NOTICE ' Script eSocial gPPI v.3.0 release 20200803';
+	RAISE NOTICE ' Script eSocial gPPI v.3.1 release 20200904';
     RAISE NOTICE '';
     RAISE NOTICE ' Payroll Performance Information created by gluques.';    
     RAISE NOTICE ' (c) 2020 - eSocial DXC Software.';
@@ -600,12 +600,13 @@ BEGIN
                     IF (mostrarNomsColumnes) THEN
                         RAISE NOTICE 'Deute Detall:';
                         RAISE NOTICE '';
-                        RAISE NOTICE '  Id      Efecte  Data Efecte          Quantitat  Q.Negociada  Q.Condonada  Q.Aplicada  Data Execució'; 
-                        RAISE NOTICE '  ------  ------  -------------------  ---------  -----------  -----------  ----------  -------------------';
+                        RAISE NOTICE '  Id      Deute   Efecte  Data Efecte          Quantitat  Q.Negociada  Q.Condonada  Q.Aplicada  Data Execució'; 
+                        RAISE NOTICE '  ------  ------  ------  -------------------  ---------  -----------  -----------  ----------  -------------------';
                         mostrarNomsColumnes := FALSE;
                     END IF;
-                    RAISE NOTICE '  %  %  %  %  %  %  %  %', 
+                    RAISE NOTICE '  %  %  %  %  %  %  %  %  %', 
                                  RPAD(TO_CHAR(regDeuteDetall.id, 'fm9999999'), 6, ' '),
+                                 RPAD(TO_CHAR(regDeuteDetall.deute_id, 'fm9999999'), 6, ' '),
                                  RPAD(TO_CHAR(regDeuteDetall.efecte_moviment_nomina_id, 'fm9999999'), 6, ' '),
                                  TO_CHAR(regDeuteDetall.data_efecte, 'DD-MM-YYYY HH24:MI:SS'),
                                  LPAD(TO_CHAR(regDeuteDetall.quantitat, 'fm99999990.00'), 9, ' '),
@@ -634,10 +635,10 @@ BEGIN
                 CLOSE cur_DeuteDetall;
                 IF (mostrarNomsColumnes) THEN
                     RAISE NOTICE 'Deute Detall: sense registres';
-                ELSE
-                    RAISE NOTICE '                                       ---------  -----------  -----------  ----------';
+                ELSE                    
+					RAISE NOTICE '                                               ---------  -----------  -----------  ----------';
                     RAISE NOTICE '  %  %  %  %', 
-                                 LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 46, ' '),
+                                 LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 54, ' '),
                                  LPAD(TO_CHAR(sumaTotal2, 'fm99999990.00'), 11, ' '),
                                  LPAD(TO_CHAR(sumaTotal3, 'fm99999990.00'), 11, ' '),
                                  LPAD(TO_CHAR(sumaTotal4, 'fm99999990.00'), 10, ' ');
