@@ -6,7 +6,7 @@ Barcelona, November 26, 2020
 
 #### Contenido
 
-    Fecha           Carpeta             Descripción                                                        
+    F.Creación      Carpeta             Descripción                                                        
     ----------      -----------------   -------------------------------------------------------------------
     23/12/2020      etools
     23/12/2020      gpfi
