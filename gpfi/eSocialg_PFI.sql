@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------------------------
---	PAYROLL FILE INFORMATION - gPFI v.1.0 release 20200713												           --	
+--	PAYROLL FILE INFORMATION - gPFI v.2.0 release 20200720												           --	
 --  						  																					   --	
 --																						   						   --	
 --  Created by Gregorio Luque Serrano for DXC.	   								   		   © eSocial DXC Software  --
@@ -10,8 +10,8 @@ SET search_path TO esocial;
 DO $$
 DECLARE
     -- Configurable parameters -------------------
-    prestacioId INTEGER := 603;    
-    dretId INTEGER := NULL;--172;
+    prestacioId INTEGER := NULL;--603;    
+    dretId INTEGER := 167;--172;
 	numeroExpedient TEXT := NULL;--'00006/2020/1003';
     ----------------------------------------------        
     regPrestacio prestacio%ROWTYPE;
@@ -32,6 +32,9 @@ DECLARE
     personaId INTEGER := NULL;
     expedientPrestacioId INTEGER := NULL;
     descripcio TEXT := NULL;
+    importsPositius DECIMAL;
+    importsNegatius DECIMAL;
+    importTotal DECIMAL;
 BEGIN	
     IF prestacioId IS NOT NULL THEN            
         SELECT * INTO regPrestacio FROM prestacio WHERE id = prestacioId;		
@@ -90,7 +93,7 @@ BEGIN
         END IF;
 	END IF;	
 	RAISE NOTICE '----------------------------------------------------------------------------------------------------------------------------';
-	RAISE NOTICE ' Script eSocial gPFI v.1.0 release 20200713';
+	RAISE NOTICE ' Script eSocial gPFI v.2.0 release 20200720';
     RAISE NOTICE '';
     RAISE NOTICE ' Payroll File Information created by gluques.';    
     RAISE NOTICE ' (c) 2020 - eSocial DXC Software.';
@@ -235,13 +238,171 @@ BEGIN
         JOIN llistat_valors lv ON etn.llistat_valors_id = lv.id
         JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
         WHERE etn.id = regNominaMensual.tipus_nomina_id;
-        RAISE NOTICE '    Tipus Nòmina........: % [%]', descripcio, regNominaMensual.tipus_nomina_id;
+        RAISE NOTICE '    Tipus nòmina........: % [%]', descripcio, regNominaMensual.tipus_nomina_id;
 		RAISE NOTICE '    Data................: %', regNominaMensual.data_nomina;
 		RAISE NOTICE '    Data generació......: %', regNominaMensual.data_inici_generacio;
 		RAISE NOTICE '    Estat...............: ''%''', regNominaMensual.estat;        
         RAISE NOTICE '    Data canvi estat....: %', regNominaMensual.data_inici_generacio;
         RAISE NOTICE '    D.Inici procediment.: %', regNominaMensual.data_inici_generacio;
-        RAISE NOTICE '    D.Fi procediment....: %', regNominaMensual.data_inici_generacio;        
+        RAISE NOTICE '    D.Fi procediment....: %', regNominaMensual.data_inici_generacio; 
+        ----------------------------------------------
+        -- Resum Imports
+        ----------------------------------------------            
+        RAISE NOTICE '  Resum imports.........:';        
+        RAISE NOTICE '                                Imp.Positius  Imp.Negatius  Imp.Total';
+        RAISE NOTICE '                                ------------  ------------  ------------';
+        
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_activitat_detall WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE NOTICE '    Activitat Detall....:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+                                                 
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_dret_teoric WHERE dret_id = dretId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE NOTICE '    Dret Teòric.........:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+                                                 
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_dret_teoric_detall WHERE dret_id = dretId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE NOTICE '    Dret Teòric Detall..:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+                                                 
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_deute WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE NOTICE '    Deute...............:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+                                                 
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_deute_detall WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE NOTICE '    Deute Detall........:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+                                                 
+        SELECT SUM(CASE WHEN (import_percebut > 0) THEN import_percebut ELSE 0 END),
+               SUM(CASE WHEN (import_percebut < 0) THEN import_percebut ELSE 0 END) AS "Imp.Negatius",
+               SUM(import_percebut) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_percebut WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;        
+        RAISE NOTICE '    Percebut............:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+                                                 
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_percebut_detall WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE NOTICE '    Percebut Detall.....:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+                                                 
+        
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_ordenacio_pagament WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE NOTICE '    Ord.Pagament........:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+        
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_ordenacio_pagament_detall WHERE nomina_id = nominaId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE NOTICE '    Ord.Pagament Detall.:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+        
+        SELECT SUM(CASE WHEN (quantitat > 0) THEN quantitat ELSE 0 END),
+               SUM(CASE WHEN (quantitat < 0) THEN quantitat ELSE 0 END) AS "Imp.Negatius",
+               SUM(quantitat) AS "Imp.Total"
+        INTO importsPositius, importsNegatius, importTotal
+        FROM eco_liquidat WHERE dret_id = dretId;
+        IF (importTotal IS NULL) THEN
+            importsPositius := 0;
+            importsNegatius := 0;
+            importTotal := 0;
+        END IF;
+        RAISE NOTICE '    Liquidat............:  %  %  %',
+                                                 LPAD(TO_CHAR(importsPositius, 'fm99999990.00'), 17, ' '),
+                                                 LPAD(TO_CHAR(importsNegatius * -1, 'fm99999990.00'), 12, ' '),
+                                                 LPAD(TO_CHAR(importTotal, 'fm99999990.00'), 12, ' ');
+        
 	ELSE				
         RAISE NOTICE '';
 		RAISE NOTICE 'ATENCIÓ: no és possible obtenir els paràmetres de consulta necessaris.';
