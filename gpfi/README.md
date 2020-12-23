@@ -1,7 +1,7 @@
-# PSQLgPFI
-## PAYROLL PERFORMANCE INFORMATION - gPPI
-### Created by *Gregorio Luque Serrano* for eSocial - ESFDS.
-Barcelona, July 13, 2020.
+## gPFI - Payroll File Information
+
+Created by gluques.  
+BBarcelona, July 13, 2020.
 
 #### Historial de versiones
 
