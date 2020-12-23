@@ -7,6 +7,6 @@ Barcelona, September 10, 2020
 
     Fecha           Descripción                                                                         Implementado
     ----------      --------------------------------------------------------------------------          ------------
-    23/11/2020      Versión inicial.                                                                    Version 1.0
+    10/09/2020      Versión inicial.                                                                    Version 1.0
                     Opción "-av" para mostrar la versión de los artefactos.
                     Opción "-ry" para restaurar los ficheros YML.
