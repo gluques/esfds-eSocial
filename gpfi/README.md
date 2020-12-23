@@ -1,7 +1,7 @@
 ## gPFI - Payroll File Information
 
 Created by gluques.  
-BBarcelona, July 13, 2020.
+Barcelona, July 13, 2020.
 
 #### Historial de versiones
 
