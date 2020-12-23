@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------------------------
---	PAYROLL FILE INFORMATION - gPFI v.2.0 release 20200720												           --	
+--	PAYROLL FILE INFORMATION - gPFI v.2.1 release 20200803												           --	
 --  						  																					   --	
 --																						   						   --	
 --  Created by Gregorio Luque Serrano for DXC.	   								   		   © eSocial DXC Software  --
@@ -10,9 +10,9 @@ SET search_path TO esocial;
 DO $$
 DECLARE
     -- Configurable parameters -------------------
-    prestacioId INTEGER := NULL;--603;    
-    dretId INTEGER := 167;--172;
-	numeroExpedient TEXT := NULL;--'00006/2020/1003';
+    prestacioId INTEGER := 83;--83;    
+    dretId INTEGER := NULL;--167;
+	numeroExpedient TEXT := NULL;--'00002/2019/34';
     ----------------------------------------------        
     regPrestacio prestacio%ROWTYPE;
 	regDret eco_dret%ROWTYPE;	
@@ -36,64 +36,43 @@ DECLARE
     importsNegatius DECIMAL;
     importTotal DECIMAL;
 BEGIN	
-    IF prestacioId IS NOT NULL THEN            
-        SELECT * INTO regPrestacio FROM prestacio WHERE id = prestacioId;		
-        IF regPrestacio.dret_id IS NOT NULL THEN                   
-            dretId := regPrestacio.dret_id;
-            expedientPrestacioId := regPrestacio.expedient_prestacio_id;    
-            SELECT * INTO regExpedientPrestacio FROM expedient_prestacio WHERE id = expedientPrestacioId;
-            numeroExpedient := regExpedientPrestacio.numero_expedient;
-			SELECT * INTO regDret FROM eco_dret WHERE id = dretId;
-			IF regDret.nomina_id IS NOT NULL THEN
-				nominaId := regDret.nomina_id;
-				SELECT INTO regNominaPersona * FROM eco_nomina_persona WHERE nomina_id = nominaId;
-				IF regNominaPersona.persona_id IS NOT NULL THEN
-					personaId := regNominaPersona.persona_id;
-					parametersOk := TRUE;
-				END IF;
-			END IF;			
-        END IF;
+    IF prestacioId IS NULL AND dretId IS NULL AND numeroExpedient IS NULL THEN
+        RAISE EXCEPTION 'No s''''ha indicat cap paràmetre'; 
     END IF;
-	IF NOT parametersOk AND dretId IS NOT NULL THEN
-		SELECT * INTO regDret FROM eco_dret WHERE id = dretId;
-		IF regDret.nomina_id IS NOT NULL THEN
-			nominaId := regDret.nomina_id;
-			SELECT * INTO regPrestacio FROM prestacio WHERE dret_id = dretId;
-			IF regPrestacio.id IS NOT NULL THEN			
-				prestacioId := regPrestacio.id;
-                expedientPrestacioId := regPrestacio.expedient_prestacio_id;
-                SELECT * INTO regExpedientPrestacio FROM expedient_prestacio WHERE id = expedientPrestacioId;
-                numeroExpedient := regExpedientPrestacio.numero_expedient;
-				SELECT INTO regNominaPersona * FROM eco_nomina_persona WHERE nomina_id = nominaId;
-				IF regNominaPersona.persona_id IS NOT NULL THEN
-					personaId := regNominaPersona.persona_id;
-					parametersOk := TRUE;
-				END IF;
-			END IF;
-		END IF;
-	END IF;
-    IF NOT parametersOk AND numeroExpedient IS NOT NULL THEN		
-		SELECT * INTO regExpedientPrestacio FROM expedient_prestacio WHERE numero_expedient = numeroExpedient;
-        IF regExpedientPrestacio.id IS NOT NULL THEN			
-            expedientPrestacioId := regExpedientPrestacio.id;
-            SELECT * INTO regPrestacio FROM prestacio WHERE expedient_prestacio_id = expedientPrestacioId;
-            IF regPrestacio.dret_id IS NOT NULL THEN				
-                prestacioId := regPrestacio.id;
-                dretId := regPrestacio.dret_id;		
-                SELECT * INTO regDret FROM eco_dret WHERE id = dretId;
-                IF regDret.nomina_id IS NOT NULL THEN
-                    nominaId := regDret.nomina_id;
-                    SELECT INTO regNominaPersona * FROM eco_nomina_persona WHERE nomina_id = nominaId;
-                    IF regNominaPersona.persona_id IS NOT NULL THEN
-                        personaId := regNominaPersona.persona_id;
-                        parametersOk := TRUE;
-                    END IF;
-                END IF;
+    IF prestacioId IS NULL THEN
+        IF dretId IS NOT NULL THEN
+            SELECT id INTO prestacioId FROM prestacio WHERE dret_id = dretId;
+            IF prestacioId IS NULL THEN 
+                RAISE EXCEPTION 'No és possible obtenir la prestació associada a el dret indicat';
+            END IF;            
+        ELSE
+            SELECT id INTO expedientPrestacioId FROM expedient_prestacio WHERE numero_expedient = numeroExpedient;
+            IF expedientPrestacioId IS NOT NULL THEN
+                SELECT id INTO prestacioId FROM prestacio WHERE expedient_prestacio_id = expedientPrestacioId;
+            END IF;
+            IF prestacioId IS NULL THEN
+                RAISE EXCEPTION 'No és possible obtenir la prestació associada a el número d''''expedient indicat';
             END IF;
         END IF;
-	END IF;	
+    END IF;
+    SELECT * INTO regPrestacio FROM prestacio WHERE id = prestacioId;		
+    IF regPrestacio.dret_id IS NOT NULL THEN                   
+        dretId := regPrestacio.dret_id;
+        expedientPrestacioId := regPrestacio.expedient_prestacio_id;    
+        SELECT * INTO regExpedientPrestacio FROM expedient_prestacio WHERE id = expedientPrestacioId;
+        numeroExpedient := regExpedientPrestacio.numero_expedient;
+        SELECT * INTO regDret FROM eco_dret WHERE id = dretId;
+        IF regDret.nomina_id IS NOT NULL THEN
+            nominaId := regDret.nomina_id;
+            SELECT INTO regNominaPersona * FROM eco_nomina_persona WHERE nomina_id = nominaId;
+            IF regNominaPersona.persona_id IS NOT NULL THEN
+                personaId := regNominaPersona.persona_id;
+                parametersOk := TRUE;
+            END IF;
+        END IF;			
+    END IF;	
 	RAISE NOTICE '----------------------------------------------------------------------------------------------------------------------------';
-	RAISE NOTICE ' Script eSocial gPFI v.2.0 release 20200720';
+	RAISE NOTICE ' Script eSocial gPFI v.2.1 release 20200803';
     RAISE NOTICE '';
     RAISE NOTICE ' Payroll File Information created by gluques.';    
     RAISE NOTICE ' (c) 2020 - eSocial DXC Software.';
