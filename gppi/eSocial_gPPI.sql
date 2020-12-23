@@ -1,5 +1,5 @@
 ---------------------------------------------------------------------------------------------------------------------
---	PAYROLL PERFORMANCE INFORMATION - gPPI v.2.1 release 20200720												   --	
+--	PAYROLL PERFORMANCE INFORMATION - gPPI v.2.2 release 20200730												   --	
 --  						  																					   --	
 --																						   						   --	
 --  Created by Gregorio Luque Serrano for DXC.	   								   		   © eSocial DXC Software  --
@@ -10,7 +10,7 @@ SET search_path TO esocial;
 DO $$
 DECLARE
     -- Configurable parameters -------------------
-    prestacioId INTEGER := 63;
+    prestacioId INTEGER := 613;
     mostrarPrestacioReserva BOOLEAN := TRUE;
     mostrarDretReserva BOOLEAN := TRUE;
     mostrarMoviment BOOLEAN := TRUE;
@@ -87,6 +87,8 @@ DECLARE
     posicio INTEGER;
     sumaTotal1 DECIMAL; 
     sumaTotal2 DECIMAL;
+    sumaTotal3 DECIMAL;
+    sumaTotal4 DECIMAL;
     numTotalRegistres INTEGER;
 BEGIN
     SELECT pre.dret_id, pre.expedient_prestacio_id INTO dretId, expedientPrestacioId FROM prestacio pre WHERE id = prestacioId;
@@ -568,6 +570,10 @@ BEGIN
                 RAISE NOTICE '';        
                 mostrarNomsColumnes := TRUE;
                 numTotalRegistres := 0;
+                sumaTotal1 := 0;
+                sumaTotal2 := 0;
+                sumaTotal3 := 0;
+                sumaTotal4 := 0;
                 OPEN cur_DeuteDetall(nominaId);   
                 LOOP	
                   FETCH cur_DeuteDetall INTO regDeuteDetall;	
@@ -592,13 +598,30 @@ BEGIN
                                     ELSE LPAD(TO_CHAR(regDeuteDetall.quantitat_aplicada, 'fm99999990.00'), 10, ' ') END,
                                  CASE WHEN regDeuteDetall.data_execucio IS NULL THEN 'NULL'
                                     ELSE TO_CHAR(regDeuteDetall.data_execucio, 'DD-MM-YYYY HH24:MI:SS') END;
+                    IF regDeuteDetall.quantitat IS NOT NULL THEN
+                        sumaTotal1 := sumaTotal1 + regDeuteDetall.quantitat;
+                    END IF;					
+                    IF regDeuteDetall.quantitat_negociada IS NOT NULL THEN
+                        sumaTotal2 := sumaTotal2 + regDeuteDetall.quantitat_negociada;
+                    END IF;					
+                    IF regDeuteDetall.quantitat_condonada IS NOT NULL THEN
+                        sumaTotal3 := sumaTotal3 + regDeuteDetall.quantitat_condonada;
+                    END IF;					
+                    IF regDeuteDetall.quantitat_aplicada IS NOT NULL THEN
+                        sumaTotal4 := sumaTotal4 + regDeuteDetall.quantitat_aplicada;
+                    END IF;				
                     numTotalRegistres := numTotalRegistres + 1;
                 END LOOP;
                 CLOSE cur_DeuteDetall;
                 IF (mostrarNomsColumnes) THEN
                     RAISE NOTICE 'Deute Detall: sense registres';
                 ELSE
-                    RAISE NOTICE '';
+                    RAISE NOTICE '                                       ---------  -----------  -----------  ----------';
+                    RAISE NOTICE '  %  %  %  %', 
+                                 LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 46, ' '),
+                                 LPAD(TO_CHAR(sumaTotal2, 'fm99999990.00'), 11, ' '),
+                                 LPAD(TO_CHAR(sumaTotal3, 'fm99999990.00'), 11, ' '),
+                                 LPAD(TO_CHAR(sumaTotal4, 'fm99999990.00'), 10, ' ');
                     IF (numTotalRegistres > 1) THEN
                         RAISE NOTICE '  % registres.', numTotalRegistres;
                     ELSE 
