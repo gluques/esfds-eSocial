@@ -25,9 +25,9 @@ requeriment:
   dies-marge: mes_mes_1
 
 corticon:
-  url:  http://lclaari00.cpd1pre.intranet.gencat.cat:8850/axis/corticon/execute
+  #url:  http://lclaari00.cpd1pre.intranet.gencat.cat:8850/axis/corticon/execute
   #url: http://localhost:8850/axis/corticon/execute
-  #url: http://esocial-corticon.swarm.net/axis/corticon/execute
+  url: http://esocial-corticon.swarm.net/axis/corticon/execute
 
   serveis:
     automatisme: eSocial-Automatisme
@@ -47,7 +47,6 @@ corticon:
     incompatibilitats: eSocial-Incompatibilitats
     filtres-supervisio: eSocial-Filtres-Supervisio
     analisi-requeriment-elegibilitat-calcul: eSocial-AnaReqEleCal
-    # analisi-requeriment-elegibilitat-calcul: eSocial-AnaReqEleCal-PNCI
     verificar-dates-efecte: eSocial-DataEfecte
     resolucio-recurs: eSocial-Resolucio-Recurs
     revisio-ofici: eSocial-Resolucio-RevisioOfici
@@ -147,6 +146,14 @@ pica:
     inemService: http://localhost:8240/backend-pica/inemService
   estrangeria:
     estrangeriaService: http://localhost:8240/backend-pica/estrangeriaService
+  tfm:
+    tfmService: http://localhost:8240/backend-pica/tfmService
+  rcaCatsalut:
+    rcaCatsalutService: http://localhost:8240/backend-pica/rcaCatsalutService
+  tfn:
+    tfnService: http://localhost:8240/backend-pica/tfnService
+  registrecivil:
+    registreCivilService: http://localhost:8240/backend-pica/registreCivilService
 
 
 gicar:
@@ -180,6 +187,8 @@ esocial:
         notificacioRequerimentRevOfici: notificacio_requeriment_rev_ofici
         comprovantRespostaRequerimentRevOfici: comprovant_requeriment_rev_ofici
         comprovantSegonaInstanciaReclamacio: comprovant_reclamacio
+        notificacioRequerimentOpcio: notificacio_requeriment_opcio
+        resolucioMultiperiode: notificacio_resolucio
       parameters:
         doc_format: PDF
         doc_type: 5

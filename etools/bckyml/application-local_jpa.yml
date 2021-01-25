@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/gluques?currentSchema=esocial
+    url: jdbc:postgresql://localhost:5432/esocial?currentSchema=esocial
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
@@ -15,7 +15,7 @@ spring:
 
 camunda:
   datasource:
-    url: jdbc:postgresql://localhost:5432/gluques?currentSchema=esocial
+    url: jdbc:postgresql://localhost:5432/esocial?currentSchema=esocial
     username: postgres
     password: postgres
     driver-class-name: org.postgresql.Driver
