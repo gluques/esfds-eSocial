@@ -16,7 +16,7 @@ windows_user_directory="C:/Users/59002704"
 # Dependencies file name:
 dependency_file_name=".npmrc"
 dependency_file_path="$windows_user_directory/$dependency_file_name"
-dependency_repository_url="http://nexus.gala-vpc.net/repository/npm-public/"
+dependency_repository_url="http://nexus.gala-svc.net/repository/npm-public/"
 
 # Directory where the front end source code is hosted:
 source_code_base_directory="C:/gluques/src"
@@ -59,7 +59,7 @@ function script_header() {
     clear
     echo -e "$isfee_color";
     echo "-----------------------------------------------------"
-    echo " ISFeE v.3.0 2020"
+    echo " ISFeE v.3.1 2021"
     echo " Install-Start Front eSocial Empleat bash script."
     echo "-----------------------------------------------------"
     echo
