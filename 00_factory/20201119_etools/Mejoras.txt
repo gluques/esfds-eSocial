@@ -1,0 +1,14 @@
+
+    Fecha                   Descripción
+    ----------------        --------------------------------------------------------------------------------------
+    04/01/2021              Añadir funcionalidad "Pull" con las opciones:
+                                
+                                -all            ---> Actualizará todos los proyectos.
+                                -a artefactname ---> Actualizará sólo el artefacto indicado.
+                                -f filename     ---> Actualizará sólo los artefactos presentes en el fichero.
+                                
+                            Para realizar el "Pull" emplearé el mismo comando que "Tortoise":
+                            
+                                git.exe pull --progress -v --no-rebase "origin"
+                            
+                                
