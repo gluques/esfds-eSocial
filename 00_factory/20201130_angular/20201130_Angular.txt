@@ -1,0 +1,68 @@
+********************************************************
+** Apuntes Angular
+**
+** Barcelona, 30 de noviembre de 2020
+********************************************************
+
+    How to Install Node.js and NPM in Windows
+    -----------------------------------------
+    https://www.netjstech.com/2020/03/how-install-nodejs-npm-windows.html
+    
+        1. Downloading Node.js:
+           https://nodejs.org/en/download/
+           
+        2. Installing Node.js:
+           Double click on the downloaded Windows Installer (.msi) file to start the installation.
+           
+        3. Checking for NPM:
+           Consola CMD y escribimos el comando:
+           
+            npm -v
+    
+    
+    Angular Project Structure With Generated Files Description
+    ----------------------------------------------------------
+    https://www.netjstech.com/2020/03/angular-project-structure-with-file-description.html
+    
+
+    Angular First App - Hello world Example
+    ---------------------------------------
+    https://www.netjstech.com/2020/03/angular-first-app-hello-world-example.html
+    
+        1. Creating Angular project:        
+           Consola CMD en la carpeta donde deseamos crear el proyecto: 
+            
+            ng new gluques-eSocial-app
+            
+        2. Running the initial project:
+        
+            cd gluques-eSocial-app
+            ng serve
+            
+        3. Creating Angular Component:    
+           Consola CMD en la carpeta del proyecto:
+           
+            ng generate component homepage
+
+            
+    Mostrar código fuente
+    ---------------------
+    https://stackblitz.com/edit/angular-display-code-snippets-in-html-page
+    
+    
+    Navigation and Routing Using the Angular 11 Router With Example
+    ---------------------------------------------------------------    
+    https://www.techiediaries.com/routing-angular-router/
+    
+        1. Creating a Routing Module:
+        
+            ng generate module app-routing --module app --flat
+            
+            
+        
+    
+        
+    
+            
+    
+    
