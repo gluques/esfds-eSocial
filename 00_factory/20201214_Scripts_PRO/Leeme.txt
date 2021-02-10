@@ -1,0 +1,47 @@
+Generador de Sripts BBDD
+------------------------
+El sistema aquí descrito permite la creación de script para arreglo de datos en los diferentes entornos eSocial.
+Estos ficheros me los hizo llegar Javier el 22/09/2020 durante el proceso de resolución del ticket 9719 - Gaps 
+Nòmina, donde se dispone de otra copia de estos ficheros.
+
+Cómo emplearlos
+---------------
+
+    1. Editamos el fichero "bodySQL.txt", y aquí escribimos la distintas sentencias SQL que deseamos
+       ejecutar. Sencillamente sustituimos el texto "SENTENCIA SQL;" por las líneas de SQL que 
+       necesitemos. El texto está tabulado, por eso aparece desplazado, si respetamos la tabulación,
+       las líneas agregadas aparecerán alineadas.
+       
+    2. Abrimos una consola GitBash en esta carpeta y ejecutamos el fichero "crea_sql.sh": 
+       Comando: "sh crea_sql.sh 10251", donde "10251" es el número de ticket.
+       Se permite el empleo de un segundo parámetro, la versión, pero no lo empleo en este ejemplo.
+       
+    3. Se generará una carpeta con el resultado, como "ESOCIAL-10251", donde encontrareos el script,
+       con un nombre tipo "ESOCIAL-10251.sql" cuyo contenido será similar a este, cambiarán las 
+       sentencias SQL indicadas en "bodySQL.txt".
+       
+            ------------------------------------------------------------------------------------------------
+            -- Script: ESOCIAL-10251
+            -- Date: 2020-10-27
+            ------------------------------------------------------------------------------------------------
+            DO
+            $$
+
+            BEGIN
+                SET search_path TO esocial;
+
+                RAISE NOTICE 'START Executing script in ESOCIAL-10251.sql';
+                
+                IF EXISTS (SELECT 1 FROM registre_scripts WHERE script = 'ESOCIAL-10251')
+                THEN
+                    RAISE WARNING '¡¡¡¡¡¡¡¡¡WARNING: ESOCIAL-10251.sql already been applied on database!!!!!!!!!!';
+                ELSE
+                    SENTENCIA SQL;
+                    -------------------------------------------------------------------------------------------------
+                    INSERT INTO registre_scripts (script,descripcio) VALUES ('ESOCIAL-10251','Correcció dades producció');
+                    -------------------------------------------------------------------------------------------------
+                    RAISE NOTICE 'INFO: END Processing ESOCIAL-10251.sql';
+                END IF;
+            END
+            $$;
+

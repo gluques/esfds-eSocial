@@ -63,6 +63,11 @@ Barcelona, July 10, 2020.
                     - Resum imports taules
                     
     21/09/2020  Evitar que se muestre información cuando indico una prestación que no dispone de Dret.  Versión 4.1
+    
+    09/02/2021  Arreglar listado de registros "Moviment Detall", alinear correctamente la columna 
+                "Import" cuando esta informada la data d'efecte final.
+                
+    
 
     
        

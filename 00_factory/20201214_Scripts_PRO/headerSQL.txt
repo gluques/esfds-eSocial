@@ -1,0 +1,16 @@
+------------------------------------------------------------------------------------------------
+-- Script: ESOCIAL-$JIRA$VER
+-- Date: $DATA
+------------------------------------------------------------------------------------------------
+DO
+$$
+
+BEGIN
+    SET search_path TO esocial;
+
+    RAISE NOTICE 'START Executing script in ESOCIAL-$JIRA$VER.sql';
+	
+	IF EXISTS (SELECT 1 FROM registre_scripts WHERE script = 'ESOCIAL-$JIRA$VER')
+	THEN
+		RAISE WARNING '¡¡¡¡¡¡¡¡¡WARNING: ESOCIAL-$JIRA$VER.sql already been applied on database!!!!!!!!!!';
+	ELSE

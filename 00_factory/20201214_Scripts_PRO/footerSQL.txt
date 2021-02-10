@@ -1,0 +1,7 @@
+		-------------------------------------------------------------------------------------------------
+		INSERT INTO registre_scripts (script,descripcio) VALUES ('ESOCIAL-$JIRA$VER','Correcció dades producció');
+		-------------------------------------------------------------------------------------------------
+		RAISE NOTICE 'INFO: END Processing ESOCIAL-$JIRA$VER.sql';
+	END IF;
+END
+$$;
