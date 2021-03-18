@@ -62,10 +62,36 @@ Barcelona, July 10, 2020.
                     - Informació de situació nomina mensual                    
                     - Resum imports taules
                     
-    21/09/2020  Evitar que se muestre información cuando indico una prestación que no dispone de Dret.  Versión 4.1
+    21/09/2020  Evitar que se muestre información cuando indico una prestación que no dispone           Versión 4.1
+                de Dret.  
     
-    09/02/2021  Arreglar listado de registros "Moviment Detall", alinear correctamente la columna 
-                "Import" cuando esta informada la data d'efecte final.
+    11/03/2021  Modificar cabecera para que incluya más información de resumen:                         Versión 5.0
+                    - Eliminar referencias DXC.
+                    - Modificar la presentacion y añadir los siguientes campos a la cabecera:
+                        * Tipus nòmina
+                        * Alta nòmina
+                        * Primera execució
+                        * Efecte inici
+                        * Estat
+                        * Últim efecte
+                        * Tipus efecte
+                        * Import actual
+                        * Import anterior
+                        * Data últim percebut 
+                        * Import últim percebut
+                        * Id Última nòmina mensual
+                        * Data generació nòmina mensual
+                        * Data nòmina mensual
+                        * Estat nòmina mensual
+                    - Creación de un "check" para mostrar únicamente la cabecera. 
+                    - Se añade el campo que indica la fecha de modificación del registro 
+                      a las tablas:                    
+                        * Dret Reserva                        
+                        * Activitat
+                        * Dret Teòric
+                    
+
+    
                 
     
 

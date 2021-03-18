@@ -51,7 +51,8 @@ arrayArtifactsLength=${#arrayArtifacts[@]}
 # ----------------------------------------------
 # Show Version Artifacts:
 # ----------------------------------------------
-function showVersionArtifacts() {        
+function showVersionArtifacts() {  
+    printf "$FG_LIGHT_BLUE_COLOR%s: $ROOT_FOLDER_PATH_ARTIFACTS\n" "Root folder path of artifacts"      
     printf "List of artifacts:\n\n"
     printf "%0.s " {1..5}
     printf "Artifact name\t\t\tVersion\t\tBranch\n"
@@ -95,8 +96,7 @@ function showVersionArtifacts() {
             printf " (%d) %s\t\t%s\t\t%s\n" $artifactReferenceId "${arrayArtifacts[$i-1]}" "$version" "$branch"
         fi        
         artifactReferenceId=$((artifactReferenceId+1))
-    done
-    printf "\n\t$FG_LIGHT_BLUE_COLOR%s: $ROOT_FOLDER_PATH_ARTIFACTS\n" "Root folder path of artifacts"
+    done    
 }
 # ----------------------------------------------
 # Script Show Help:

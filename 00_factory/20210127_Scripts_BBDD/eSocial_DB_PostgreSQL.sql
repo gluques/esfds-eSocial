@@ -60,7 +60,8 @@ ORDER BY age DESC;
 --
 -- [06] CONSULTA CATALOGO
 --
-SELECT table_name, column_name FROM information_schema.columns
+SELECT table_name, column_name, data_type 
+FROM information_schema.columns
 WHERE table_schema = 'esocial' 
   --AND table_name LIKE '%incidencia%'
   --OR column_name LIKE '%incidencia%'    

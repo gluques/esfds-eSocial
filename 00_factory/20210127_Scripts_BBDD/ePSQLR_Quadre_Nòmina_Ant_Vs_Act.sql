@@ -128,8 +128,9 @@ WHERE actdet.nomina_mensual_id = 59
 		  AND efemovnom.data_efecte_inici <= actdet.data_efecte
 		  AND efemovnom.tipus_id = 1
 );
+
 --
--- [01.12] IMPORT MODIFICACIONS ORDINARIA
+-- [01.13] IMPORT MODIFICACIONS ORDINARIA
 --
 SELECT COUNT(actdet.nomina_id) AS "Total nòmines modificacions ordinària",
 		 TO_CHAR(FLOAT8 (SUM(actdet.quantitat)), 'FM999999999.00') AS "Import modificacions ordinària (IMMI)"	
@@ -149,6 +150,38 @@ WHERE actdet.nomina_mensual_id = 59
 		  AND efemovnom.tipus_id = 19
 );
 
+
+
+--
+-- Beneficiaris e imports:
+--
+SELECT lv.id AS "Id Concepte",
+		 lv.acronim AS "Acronim Concepte",
+		 lvi.descripcio AS "Descripció Concepte",
+		 lva.id AS "Id Agrupació",
+		 lva.acronim AS "Acronim Agrupació",
+		 lvai.descripcio AS "Descripció Agrupació"		 
+FROM llistat_valors lv
+	JOIN llistat_valors_agrupacions lva ON lv.llistat_valors_agrupacions_id = lva.id
+	JOIN llistat_valors_agrupacions_idioma lvai ON lva.id = lvai.llistat_valors_agrupacions_id
+	JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
+	JOIN idioma i ON lvi.idioma_id = i.id
+WHERE lva.acronim IN ('NUMBE', 'IMPRT')
+ORDER BY lva.acronim DESC, lv.acronim;
+
+--
+-- Llistat de quantitats Quadre amb agrupació i descripció de conceptes:
+--
+SELECT nmq.*, 
+		 lvai.descripcio AS "Agrupació", 
+		 lvi.descripcio AS "Concepte"
+FROM eco_nomina_mensual_quantitat nmq
+ JOIN llistat_valors lv ON nmq.tipus_quantitat_nomina_id = lv.acronim
+ JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
+ JOIN llistat_valors_agrupacions lva ON lv.llistat_valors_agrupacions_id = lva.id
+ JOIN llistat_valors_agrupacions_idioma lvai ON lva.id = lvai.llistat_valors_agrupacions_id
+WHERE nomina_mensual_id = 65
+ORDER BY lva.acronim DESC, lv.acronim;
 
 
 
@@ -174,6 +207,31 @@ WHERE actdet.nomina_mensual_id = 55
 										 FROM eco_activitat_detall actdet
 										 WHERE actdet.nomina_mensual_id = 47)
 ORDER BY actdet.nomina_id;
+
+--
+-- [01.12] Datos expedientes nòminas altas:
+--
+SELECT DISTINCT 
+   epr.numero_expedient AS "Num.Expedient", 
+   nom.id AS "Nòmina",
+   nom.data_alta_nomina AS "D.Alta Nòmina",
+   nom.data_primera_execucio AS "D.Pri. Excecució",
+   per.id AS "Persona",
+   ide.valor AS "Identificador"
+FROM eco_nomina nom
+ JOIN eco_dret dre ON nom.id = dre.nomina_id
+ JOIN prestacio pre ON dre.id = pre.dret_id
+ JOIN expedient_prestacio epr ON pre.expedient_prestacio_id = epr.id
+ JOIN persona per ON epr.persona_id = per.id
+ JOIN identificador ide ON per.id = ide.persona_id
+WHERE nom.id IN (SELECT DISTINCT actdet.nomina_id
+					  FROM eco_activitat_detall actdet
+					  WHERE actdet.nomina_mensual_id = 63
+					    AND actdet.nomina_id NOT IN (SELECT DISTINCT actdet.nomina_id
+						  									   FROM eco_activitat_detall actdet
+															   WHERE actdet.nomina_mensual_id = 59))
+ORDER BY nom.data_alta_nomina;
+
 --
 -- [01.09] NOMINES AMB CANVI D'IMPORT
 --
