@@ -1,0 +1,249 @@
+-----------------------------------------------------------------------
+-- gluques GitHub 
+--
+-- Barcelona, 26 de noviembre de 2020
+-----------------------------------------------------------------------
+
+----------------------------------------
+[01] Crear una cuenta en GitHub
+----------------------------------------
+Github es un portal creado para alojar el código de las aplicaciones de cualquier desarrollador, y que fue 
+comprada por Microsoft en junio del 2018. Podemos acceder a "https://github.com/" para crear una cuenta haciendo
+en "Sign up", lo que nos mostrará la pantalla "Create your account":
+
+    Username:       gluques
+    Email address:  gluques@gmail.com
+    Password:       g.3!Luq466
+    
+Una vez disponemos de la cuenta, podemos acceder en cualquier momento a través de "https://github.com/login".
+
+
+----------------------------------------
+[02] Agregar una clave SSH a la cuenta
+----------------------------------------
+Podemos no realizar este paso y acceder a nuestros repositorios vía HTTPS, sin embargo no es la forma más 
+eficiente de trabajar, es más práctico emplear una clave SSH.
+
+Pasos a seguir para emplear SSH con nuestra cuenta de GitHub:
+    
+    1. Abrimos Git Bash.
+    2. Comprobamos claves SSH existentes:    
+       $ ls -al ~/.ssh
+       
+    3. Si no tenemos un par de llaves pública y privada, o si no deseamos utilizar las que están disponibles para 
+       conectarte a GitHub, podemos generar una llave SSH nueva:
+       
+        3.1. Crear nueva clave SSH:       
+             $ ssh-keygen -t rsa -b 4096 -C "gluques@gmail.com"
+       
+                Generating public/private rsa key pair.
+                Enter file in which to save the key (/c/Users/59002704/.ssh/id_rsa):
+                Enter passphrase (empty for no passphrase):
+                Enter same passphrase again:
+                Your identification has been saved in /c/Users/59002704/.ssh/id_rsa
+                Your public key has been saved in /c/Users/59002704/.ssh/id_rsa.pub
+                The key fingerprint is:
+                SHA256:62eiuawPDv2rW58MeKJhRsLppEhAomK13FLRSKGNEtk gluques@gmail.com
+                The key's randomart image is:
+                +---[RSA 4096]----+
+                |.oo..==          |
+                |+.+EB. .         |
+                |+o * o           |
+                |= o .            |
+                |.=.     S        |
+                |*o . .   .       |
+                |o.= = + .        |
+                | o = B *..o      |
+                |  . ==O+=+       |
+                +----[SHA256]-----+
+       
+             (*) Passphrase: "KgleylUq466eySsh"
+             (*) Se generan los ficheros "id_rsa" y "id_rsa.pub" en "C:\Users\59002704\.ssh"
+
+        3.2. Comprobamos que se hayan creado las nuevas claves:
+             $ ls -al ~/.ssh
+        
+                total 36
+                drwxr-xr-x 1 59002704 1049089    0 nov. 26 23:07 ./
+                drwxr-xr-x 1 59002704 1049089    0 dic. 22 22:01 ../
+                -rw-r--r-- 1 59002704 1049089 3434 nov. 26 23:07 id_rsa
+                -rw-r--r-- 1 59002704 1049089  743 nov. 26 23:07 id_rsa.pub
+                -rw-r--r-- 1 59002704 1049089 1806 dic. 14 17:54 known_hosts
+
+        3.3. Verificamos que el "ssh-agent" se esté ejecutando, y si no lo está, lo iniciamos:
+             $ eval $(ssh-agent -s)
+        
+                Agent pid 2717
+            
+        3.4. Agregamos la llave privada SSH al ssh-agent:        
+             $ ssh-add ~/.ssh/id_rsa
+                    
+                Enter passphrase for C:/Users/59002704/.ssh/id_rsa:
+                Identity added: C:/Users/59002704/.ssh/id_rsa (gluques@gmail.com)
+        
+    4. Agregar la nueva clave SSH a la cuenta de GitHub:
+    
+        6.1. Copia la clave SSH en el portapapeles:
+             $ clip < ~/.ssh/id_rsa.pub
+             
+        6.2. Accedemos a GitHub. En la esquina superior derecha de cualquier página, haces clic en la 
+             foto de perfil y después clic en "Settings". A continuación seleccionamos la opción "SSH and GPG keys",
+             y a continuación "New SSH key". Cumplimentamos el formulario que se nos muestra, pegando la clave desde 
+             el portapapeles en el campo "Key". 
+             
+        6.3. Verificamos la clave:
+             $ ssh -T git@github.com
+             
+                Hi gluques! You've successfully authenticated, but GitHub does not provide shell access.
+    
+Si en algún momento necesitamos buscar y tomar nota de nuestra llave pública, podemos emplear:
+
+    $ ssh-add -l -E sha256 
+    
+        4096 SHA256:62eiuawPDv2rW58MeKJhRsLppEhAomK13FLRSKGNEtk gluques@gmail.com (RSA)
+    
+Referencias:
+
+    (a) "Agregar una clave SSH nueva a tu cuenta de GitHub"
+        "https://docs.github.com/es/free-pro-team@latest/github/authenticating-to-github/adding-a-new-ssh-key-to-your-github-account"
+
+
+----------------------------------------
+[02] Crear un repositorio
+----------------------------------------
+GitHub utiliza el sistema de control de versiones "Git" diseñado por Linus Torvalds. Git emplea el concepto de 
+"repositorio" que es un almacenamiento virtual para nuestro proyecto, que nos permite guardar versiones del 
+código a las que podemos acceder cuando lo necesitemos.
+
+Desde GitHub podemos crear repositorios de forma sencilla. En la esquina superior derecha de cualquier página, 
+disponemos del menú desplegable "+" y entre sus opciones, "New Repository". Una vez finalizada la creación, 
+se nos mostrará la página principal del nuevo repositorio, donde dispondremos del btoón "Code". Si hacemos clic
+sobre el mismo, se nos mostrarán diversas formas de hacer referencia a nuestro nuevo repositorio; por ejemplo,
+si el nuevo repositorio se denomina "esfds-eSocial", se nos mostrará:
+
+    HTTPS:      https://github.com/gluques/esfds-eSocial.git
+    SSH:        git@github.com:gluques/esfds-eSocial.git
+    GitHub CLI: gh repo clone gluques/esfds-eSocial
+
+Podemos emplear el acceso HTTPS, sin embargo, cada vez que llevemos a cabo cualquier operación con el repositorio 
+remoto, se nos solicitarán las credenciales, lo que resulta muy molesto. Si empleamos un acceso SSH, podemos 
+configurar el acceso para que sólo tengamos que informar nuestros datos de identificación al comenzar a trabajar, 
+es decir, una sóla vez.
+
+Referencias:
+
+    (a) ¿Qué es un repositorio de Git?
+        https://www.atlassian.com/es/git/tutorials/setting-up-a-repository
+    
+    (b) Configuración de un repositorio
+        https://www.atlassian.com/es/git/tutorials/setting-up-a-repository
+        
+        
+----------------------------------------
+[03] Clonar un repositorio
+----------------------------------------
+Disponemos en este punto de una cuenta en GitHub, una clave SSH para la transferencia y un repositorio denominado
+"esfds-eSocial", ahora vamos a clonarlo en nuestro entorno local para poder realizar cambios:
+
+    1. Abrimos GitBash.
+    2. Ejecutamos el comando:
+       $ git clone git@github.com:gluques/esfds-eSocial [destination-directory-name]
+       
+            Cloning into 'C:/gluques/srcown/esfds-eSocial'...
+            remote: Enumerating objects: 3, done.
+            remote: Counting objects: 100% (3/3), done.
+            remote: Total 3 (delta 0), reused 0 (delta 0), pack-reused 0
+            Receiving objects: 100% (3/3), done.
+      
+       (*) "git@github.com:gluques/esfds-eSocial" es el repositorio a clonar, en este caso, en formato SSH.
+       (*) "destination-directory-name" es el directorio destino del contenido del repositorio; puede ser cualquiera.
+           Si no indicamos carpeta destino, se creará una por defecto en la carpeta donde se haya ejecutado el comando 
+           con el nombre del repositorio.
+          
+          
+----------------------------------------
+ Anexo A: Referencia trabajo diario 
+----------------------------------------
+Pasos a seguir para inicar una sesión de trabajo habitual con nuestra cuenta de GitHub:
+
+    1. Iniciar sesión en GitHub:
+        1.1. Accedemos a "https://github.com/"        
+        1.2. Nos identificamos:
+             Username: gluques    
+             Password: g.3!Luq466
+    
+    2. Activación de nuesta clave SSH:    
+        2.1. Abrimos Git Bash.        
+        2.2. Iniciamos el SSH-Agent:
+             $ eval $(ssh-agent -s)
+        2.3. Agregamos la llave privada SSH al SSH-Agent:
+             Passphrase: KgleylUq466eySsh
+             $ ssh-add ~/.ssh/id_rsa
+
+    3. Bajar código:
+       $ git pull --progress -v --no-rebase "origin"
+       
+    4. Subir código:
+       $ git push --progress "origin" master:master
+
+----------------------------------------
+ Anexo B: Referencia comandos Bash
+----------------------------------------
+
+    Comando                                             Descripción
+    ----------------------------------------------      ---------------------------------------------------------------------------
+    pwd                                                 Print Current Working Directory.
+    cd [directory-name]                                 Change Current Working Directory.
+    cd ..                                               Go back to the parent directory of any current directory
+    cd ~                                                Go back to your home directory
+    mkdir [directory-name]                              Create a New Directory.
+    ls                                                  Print a List of Files and Subdirectories.
+    rm [file-name]                                      Delete a File.
+    rm -r -f [directory-name]                           Delete a Directory and all the sub-directories and files that it contains
+    cp [file-name] [directory-name]                     Copy a File.
+    cp -r [directory-name-1] [directory-name-2]         Copy a Directory and Its Contents.
+    touch [file-name]                                   Create a New File Using a Single Command.
+    cat > [file-name]                                   Create a New File (CTRL + D)
+    cat [file-name]                                     Show file content.
+
+
+----------------------------------------
+ Anexo C: Migración de repositorios
+----------------------------------------
+Durante el proceso de creación de una estructura adecuada para el repositorio asociado a mi trabajo con 
+eSocial en ESFDS, he realizado varias pruebas. Inicialmente he creado un repositorio por herramienta o utilidad
+personal, lo que ha dado lugar a los siguientes repositorios:
+
+    > esfds-ISFeSocialEmpleat
+      $ git clone git@github.com:gluques/esfds-ISFeSocialEmpleat
+    > esfds-PSQLgPPI
+      $ git clone git@github.com:gluques/esfds-PSQLgPPI
+    > esfds-PSQLgPFI
+      $ git clone git@github.com:gluques/esfds-PSQLgPFI
+      
+Una vez clonado el repositorio, procedemos como se indica a continuación.
+
+    1. Abrimos consola GitBash en la carpeta del repositorio.
+    2. Mostramos todos los commits realizados:
+       $ git log
+       
+    3. Anotamos el commit (<hash>) deseado, por ejemplo "e9f7aaa8000a61d86610602756447e8b2f648647".
+    4. Ejecutamos el siguiente comando "git checkout <hash>" para recuparar esa versión del código:
+       $ git checkout e9f7aaa8000a61d86610602756447e8b2f648647
+       
+    5. Podemos regresar al commit más reciente con:
+       $ git checkout master
+    
+    
+----------------------------------------
+ Anexo D: Cambiar email usado por Git
+---------------------------------------- 
+Para cambiar el email asociado a nuestro repositorio Git:
+
+    1. Comprobamos el email actual:
+       $ git config --global user.email
+       
+    2. Si no es correcto, empleamos el siguiente comando para cambiarlo:
+       $ git config --global user.email "myemail@mycompany.com"
+                      
+                              

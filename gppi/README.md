@@ -31,9 +31,9 @@ Barcelona, July 10, 2020.
     19/07/2020  Ordenar tabla eco_activitat_detall por Id Activitat, Id Nòmina Mensual,                 Versión 2.1
                 Data de Efecte i Id.        
                 
+    23/07/2020  Añadir totalizador de importes a la tabla eco_deute_detall.                             Versión 2.2                
+                
     19/07/2020  Añadir posibilidad de ejecución con "dret_id" y "numeroExpedient".                      Versión 3.0
-    
-    23/07/2020  Añadir totalizador de importes a la tabla eco_deute_detall.                             Versión 2.2
     
     03/09/2020  Añadir columna "deute_id" al listado de registros de la tabla "eco_deute_detall".       Versión 3.1
     
@@ -90,11 +90,25 @@ Barcelona, July 10, 2020.
                         * Activitat
                         * Dret Teòric
                     
-
+    24/03/2021  Arreglar formato campo "Alta" y "Primera execució" en la cabecera, de "2021-03-24"      Versión 5.1
+                a "24-03-2021", y hacer lo mismo con todos los campos de fecha en el área de 
+                "INFORMACIÓ DE SITUACIÓ".
     
+    24/03/2021  Arreglar presentación tabla "Moviment Detall" campo "Import" para que esté bien         Versión 5.1
+                alineado con la columna cuando el campo "Data Efecte Final" es "<NULL>" y 
+                cuando no lo es; creo que depende de la longitud del "Id" a veces sale mal.
+    
+    25/03/2021  Añadir el tipo de prestación en la cabecera para que se muestre cuando se trata de      Versión 5.1
+                un prestación sin Dret; así podré copiar la cabecera y dejar constancia del tipo.
+                                
+    26/03/2021  No se está mostrando "Tramit" en la cabecera cuando el expediente no dispone de         Versión 5.1
+                Dret. Sin embargo, empleando la consulta para el JSON de altas, sí se muestra
+                este valor; hacer que se muestre.
                 
-    
-
-    
-       
+    29/03/2021  Arreglar la visualización del campo "Tramit" de la tabla "Moviment" para que se         Versión 5.1
+                muestre correctamente ampliando el número de digitos visibles de 6 a 8 
+                ('fm99999999').
+                
+                
+                
                 

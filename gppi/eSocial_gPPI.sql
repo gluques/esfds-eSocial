@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------------------------
 --  eSocial_gPPI.sql                                                                                               --
---	Payroll Performance Information - v.5.0 release 20210318     												   --	
+--	Payroll Performance Information - v.5.1 release 20210329     												   --	
 --  						  																					   --	
 --																						   						   --	
 --  Created by Gregorio Luque Serrano.      	   								   		                           --
@@ -16,7 +16,7 @@ DECLARE
     --
     -- File identification parameters:
     --
-    prestacioId INTEGER := 712;
+    prestacioId INTEGER := 921;
     dretId INTEGER := NULL;
 	numeroExpedient TEXT := NULL;
     --
@@ -119,6 +119,7 @@ DECLARE
     -- Simple type variables:
     -------------------------------------------------------------------------------
     expedientPrestacioId INTEGER;
+    tipusPrestacioId INTEGER;
     personaId INTEGER;
     nominaId INTEGER;
     procedimentId INTEGER;
@@ -160,7 +161,9 @@ BEGIN
     -------------------------------------------------------------------------------
     -- Script header:
     -------------------------------------------------------------------------------    
-    SELECT pre.dret_id, pre.expedient_prestacio_id INTO dretId, expedientPrestacioId FROM prestacio pre WHERE pre.id = prestacioId;    
+    SELECT pre.dret_id, pre.expedient_prestacio_id, pre.tipus_prestacio_id 
+    INTO dretId, expedientPrestacioId, tipusPrestacioId 
+    FROM prestacio pre WHERE pre.id = prestacioId;    
     IF expedientPrestacioId IS NOT NULL THEN
         SELECT epr.persona_id, epr.numero_expedient INTO personaId, numeroExpedient FROM expedient_prestacio epr WHERE epr.id = expedientPrestacioId;
         SELECT ppr.id INTO procedimentId FROM procediment_prestacio ppr WHERE ppr.expedient_prestacio_id = expedientPrestacioId;
@@ -168,6 +171,11 @@ BEGIN
             SELECT tramit_id INTO tramitId FROM eco_moviment 
             WHERE expedient_id = expedientPrestacioId AND procediment_id = procedimentId 
             ORDER BY data_creacio_moviment DESC, id DESC LIMIT 1;
+            IF tramitId IS NULL AND procedimentId IS NOT NULL THEN
+                SELECT id INTO tramitId FROM tramit_prestacio
+                WHERE procediment_prestacio_id = procedimentId
+                ORDER BY id LIMIT 1;
+            END IF;                          
         ELSE 
             SELECT tramit_id INTO tramitId FROM eco_moviment
             WHERE id = (SELECT moviment_id FROM eco_moviment_detall WHERE nomina_id = nominaId 
@@ -176,19 +184,27 @@ BEGIN
     END IF;
     SELECT dre.nomina_id INTO nominaId FROM eco_dret dre WHERE id = dretId; 
     RAISE INFO '----------------------------------------------------------------------------------------------------------------------------';
-	RAISE INFO ' Script eSocial gPPI v.5.0 release 20210318';
+	RAISE INFO ' Script eSocial gPPI v.5.1 release 20210329';
     RAISE INFO '';
     RAISE INFO ' Payroll Performance Information created by gluques.';    
     RAISE INFO ' 2020-2021 - Economic eSocial Project.';
 	RAISE INFO '';
-	RAISE INFO '    Dades Prestació:';    
+	RAISE INFO '    Resum dades prestació:';    
     RAISE INFO '      Num.Expedient......: %', numeroExpedient;
     RAISE INFO '      Exp.Prestació......: %', expedientPrestacioId;
     RAISE INFO '      Procediment........: %', procedimentId;
     RAISE INFO '      Tramit.............: %', tramitId;
     RAISE INFO '      Prestació..........: %', prestacioId;
     RAISE INFO '      Persona............: %', personaId;
-    RAISE INFO '      Dret...............: %', dretId;
+    IF (dretId IS NULL) THEN        
+        SELECT lvi.descripcio INTO descripcio FROM eco_tipus_prestacio ete
+        JOIN llistat_valors lv ON ete.llistat_valors_id = lv.id
+        JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
+        WHERE ete.id = tipusPrestacioId;
+        RAISE INFO '      Tipus prestació....: %', descripcio;
+    ELSE
+        RAISE INFO '      Dret...............: %', dretId;
+    END IF;        
     IF (dretId IS NOT NULL) THEN
         SELECT * INTO regNomina FROM eco_nomina WHERE id = nominaId;
         RAISE INFO '      Nòmina.............: %', nominaId;        
@@ -197,8 +213,8 @@ BEGIN
         JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
         WHERE etn.id = regNomina.tipus_nomina_id;
         RAISE INFO '      Tipus..............: % [%]', descripcio, regNomina.tipus_nomina_id;
-        RAISE INFO '      Alta...............: %', regNomina.data_alta_nomina;
-        RAISE INFO '      Primera execució...: %', regNomina.data_primera_execucio;
+        RAISE INFO '      Alta...............: %', TO_CHAR(regNomina.data_alta_nomina, 'DD-MM-YYYY HH24:MI:SS');
+        RAISE INFO '      Primera execució...: %', TO_CHAR(regNomina.data_primera_execucio, 'DD-MM-YYYY HH24:MI:SS');
         RAISE INFO '      Efecte inici.......: %', TO_CHAR(regNomina.data_efecte_inici, 'DD-MM-YYYY');
         SELECT lvi.descripcio INTO descripcio FROM eco_estat_nomina een
         JOIN llistat_valors lv ON een.llistat_valors_id = lv.id
@@ -249,10 +265,10 @@ BEGIN
             IF (mostratInformaciSituacioDret) THEN            
                 SELECT * INTO regDret FROM eco_dret WHERE id = dretId;
                 RAISE INFO '  Dret...................: %', dretId;
-                RAISE INFO '    Data activació.......: %', regDret.data_activacio;
-                RAISE INFO '    Data canvi estat.....: %', regDret.data_canvi_estat;
-                RAISE INFO '    Data efecte inici....: %', regDret.data_efecte_inici;
-                RAISE INFO '    Data efecte fi.......: %', regDret.data_efecte_fi;
+                RAISE INFO '    Data activació.......: %', TO_CHAR(regDret.data_activacio, 'DD-MM-YYYY HH24:MI:SS');
+                RAISE INFO '    Data canvi estat.....: %', TO_CHAR(regDret.data_canvi_estat, 'DD-MM-YYYY HH24:MI:SS');
+                RAISE INFO '    Data efecte inici....: %', TO_CHAR(regDret.data_efecte_inici, 'DD-MM-YYYY');
+                RAISE INFO '    Data efecte fi.......: %', TO_CHAR(regDret.data_efecte_fi, 'DD-MM-YYYY');
                 SELECT lvi.descripcio INTO descripcio FROM eco_tipus_estat_dret eted
                 JOIN llistat_valors lv ON eted.llistat_valors_id = lv.id
                 JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
@@ -269,15 +285,15 @@ BEGIN
             ----------------------------------------------            
             IF (mostratInformaciSituacioNomina) THEN                        
                 RAISE INFO '  Nòmina.................: %', nominaId;                	
-                RAISE INFO '    Alta.................: %', regNomina.data_alta_nomina;
+                RAISE INFO '    Alta.................: %', TO_CHAR(regNomina.data_alta_nomina, 'DD-MM-YYYY HH24:MI:SS');
                 SELECT lvi.descripcio INTO descripcio FROM eco_tipus_nomina etn
                 JOIN llistat_valors lv ON etn.llistat_valors_id = lv.id
                 JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
                 WHERE etn.id = regNomina.tipus_nomina_id;
                 RAISE INFO '    Tipus................: % [%]', descripcio, regNomina.tipus_nomina_id;	
-                RAISE INFO '    Primera execució.....: %', regNomina.data_primera_execucio;
-                RAISE INFO '    Efecte inici.........: %', regNomina.data_efecte_inici;
-                RAISE INFO '    Efecte fi............: %', regNomina.data_efecte_fi;
+                RAISE INFO '    Primera execució.....: %', TO_CHAR(regNomina.data_primera_execucio, 'DD-MM-YYYY HH24:MI:SS');
+                RAISE INFO '    Efecte inici.........: %', TO_CHAR(regNomina.data_efecte_inici, 'DD-MM-YYYY');
+                RAISE INFO '    Efecte fi............: %', TO_CHAR(regNomina.data_efecte_fi, 'DD-MM-YYYY');
                 SELECT lvi.descripcio INTO descripcio FROM eco_estat_nomina een
                 JOIN llistat_valors lv ON een.llistat_valors_id = lv.id
                 JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
@@ -288,7 +304,7 @@ BEGIN
                 JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
                 WHERE emen.id = regNomina.estat_motiu_id;
                 RAISE INFO '    Motiu estat..........: % [%]', descripcio, regNomina.estat_motiu_id;	
-                RAISE INFO '    Data estat...........: %', regNomina.data_estat;
+                RAISE INFO '    Data estat...........: %', TO_CHAR(regNomina.data_estat, 'DD-MM-YYYY HH24:MI:SS');
             END IF;
             ----------------------------------------------
             --- Informació de situació - Persona:    
@@ -314,10 +330,10 @@ BEGIN
                 JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
                 WHERE etn.id = regNominaMensual.tipus_nomina_id;
                 RAISE INFO '    Tipus nòmina.........: % [%]', descripcio, regNominaMensual.tipus_nomina_id;
-                RAISE INFO '    Data.................: %', regNominaMensual.data_nomina;
-                RAISE INFO '    Data generació.......: %', regNominaMensual.data_inici_generacio;
+                RAISE INFO '    Data.................: %', TO_CHAR(regNominaMensual.data_nomina, 'DD-MM-YYYY');
+                RAISE INFO '    Data generació.......: %', TO_CHAR(regNominaMensual.data_inici_generacio, 'DD-MM-YYYY HH24:MI:SS');
                 RAISE INFO '    Estat................: ''%''', regNominaMensual.estat;        
-                RAISE INFO '    Data canvi estat.....: %', regNominaMensual.data_canvi_estat;    
+                RAISE INFO '    Data canvi estat.....: %', TO_CHAR(regNominaMensual.data_canvi_estat, 'DD-MM-YYYY HH24:MI:SS');   
             END IF;
         ELSE 
             mostrarInformaciSituacio = FALSE;
@@ -622,7 +638,7 @@ BEGIN
                                          RPAD(TO_CHAR(regMoviment.id, 'fm9999999'), 6, ' '), 
                                          RPAD(TO_CHAR(regMoviment.expedient_id, 'fm999999'), 9, ' '),
                                          RPAD(TO_CHAR(regMoviment.procediment_id, 'fm999999'), 11, ' '),
-                                         RPAD(TO_CHAR(regMoviment.tramit_id, 'fm999999'), 6, ' '),
+                                         RPAD(TO_CHAR(regMoviment.tramit_id, 'fm99999999'), 6, ' '),
                                          TO_CHAR(regMoviment.data_creacio_moviment, 'DD-MM-YYYY HH24:MI:SS'),
                                          regMoviment.estat_moviment;
                             numTotalRegistres := numTotalRegistres + 1;
@@ -686,7 +702,7 @@ BEGIN
                                          TO_CHAR(regMovimentDetall.data_efecte_final, 'DD-MM-YYYY HH24:MI:SS'),
                                          CASE WHEN regMovimentDetall.data_efecte_final IS NULL 
                                             THEN LPAD(TO_CHAR(regMovimentDetall.import_moviment, 'fm99999990.00'), 23, ' ') 
-                                            ELSE TO_CHAR(regMovimentDetall.import_moviment, 'fm99999990.00') END;
+                                            ELSE LPAD(TO_CHAR(regMovimentDetall.import_moviment, 'fm99999990.00'), 10, ' ') END;
                             numTotalRegistres := numTotalRegistres + 1;
                         END LOOP;
                         CLOSE cur_Moviment_Detall;            
