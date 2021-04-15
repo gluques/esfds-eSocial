@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------------------------
 --  eSocial_gPPI.sql                                                                                               --
---	Payroll Performance Information - v.5.1 release 20210329     												   --	
+--	Payroll Performance Information - v.5.2 release 20210415     												   --	
 --  						  																					   --	
 --																						   						   --	
 --  Created by Gregorio Luque Serrano.      	   								   		                           --
@@ -16,7 +16,7 @@ DECLARE
     --
     -- File identification parameters:
     --
-    prestacioId INTEGER := 921;
+    prestacioId INTEGER := 263;
     dretId INTEGER := NULL;
 	numeroExpedient TEXT := NULL;
     --
@@ -65,7 +65,7 @@ DECLARE
     cur_Moviment_Detall CURSOR(p_idNomina INTEGER) FOR
         SELECT * FROM eco_moviment_detall WHERE nomina_id = p_idNomina ORDER BY moviment_id, data_efecte_inicial, id;        
     cur_EfecteMovimentNomina CURSOR(p_idDret INTEGER) FOR
-		SELECT * FROM eco_efecte_moviment_nomina WHERE dret_id = p_idDret ORDER BY moviment_detall_id, data_efecte_inici, id;    
+		SELECT * FROM eco_efecte_moviment_nomina WHERE dret_id = p_idDret ORDER BY data_efecte_inici, moviment_detall_id, id;    
     cur_Activitat CURSOR(p_idDret INTEGER) FOR
 		SELECT * FROM eco_activitat WHERE dret_id = p_idDret ORDER BY moviment_id, data_efecte_inicial, id;        
     cur_ActivitatDetall CURSOR(p_idNomina INTEGER) FOR
@@ -184,7 +184,7 @@ BEGIN
     END IF;
     SELECT dre.nomina_id INTO nominaId FROM eco_dret dre WHERE id = dretId; 
     RAISE INFO '----------------------------------------------------------------------------------------------------------------------------';
-	RAISE INFO ' Script eSocial gPPI v.5.1 release 20210329';
+	RAISE INFO ' Script eSocial gPPI v.5.2 release 20210415';
     RAISE INFO '';
     RAISE INFO ' Payroll Performance Information created by gluques.';    
     RAISE INFO ' 2020-2021 - Economic eSocial Project.';
@@ -869,27 +869,27 @@ BEGIN
                   EXIT WHEN NOT FOUND;
                     IF (mostrarNomsColumnes) THEN
                         RAISE INFO '  Dret Teòric:';
-                        RAISE INFO '';
-                        RAISE INFO '    Id      Data Efecte          Quantitat  Data Execució        Rcd Crt Ts'; 
-                        RAISE INFO '    ------  -------------------  ---------  -------------------  -------------------';
+                        RAISE INFO '';						
+						RAISE INFO '    Id      Rcd Crt Ts             Data Efecte  Quantitat  Data Execució'; 
+                        RAISE INFO '    ------  -------------------    -----------  ---------  -------------------';
                         mostrarNomsColumnes := FALSE;
                     END IF;
-                    RAISE INFO '    %  %  %  %  %', 
-                                 RPAD(TO_CHAR(regDretTeoric.id, 'fm9999999'), 6, ' '),                                                              
-                                 TO_CHAR(regDretTeoric.data_efecte, 'DD-MM-YYYY HH24:MI:SS'),
-                                 LPAD(TO_CHAR(regDretTeoric.quantitat, 'fm99999990.00'), 9, ' '),
-                                 TO_CHAR(regDretTeoric.data_execucio, 'DD-MM-YYYY HH24:MI:SS'),
-                                 TO_CHAR(regDretTeoric.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS');
+                    RAISE INFO '    %  % % % %', 
+                                 RPAD(TO_CHAR(regDretTeoric.id, 'fm9999999'), 6, ' '),
+								 TO_CHAR(regDretTeoric.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'),
+								 LPAD(TO_CHAR(regDretTeoric.data_efecte, 'DD-MM-YYYY'), 13, ' '),
+								 LPAD(TO_CHAR(regDretTeoric.quantitat, 'fm99999990.00'), 11, ' '),								 
+								 CASE WHEN regDretTeoric.data_execucio IS NULL THEN LPAD('NULL', 5, ' ') 
+                                    ELSE LPAD(TO_CHAR(regDretTeoric.data_execucio, 'DD-MM-YYYY HH24:MI:SS'), 20, ' ') END;
                     sumaTotal1 := sumaTotal1 + regDretTeoric.quantitat;
                     numTotalRegistres := numTotalRegistres + 1;
                 END LOOP;
                 CLOSE cur_DretTeoric;
                 IF (mostrarNomsColumnes) THEN
                     RAISE INFO '  Dret Teòric: sense registres';
-                ELSE            
-                    RAISE INFO '                                 ---------';
-                    RAISE INFO '    %', 
-                                 LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 38, ' ');
+                ELSE                    
+					RAISE INFO '%', LPAD('---------', 57, ' ');
+                    RAISE INFO '%', LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 57, ' ');
                     IF (numTotalRegistres > 1) THEN
                         RAISE INFO '    % registres.', numTotalRegistres;
                     ELSE 
@@ -912,15 +912,15 @@ BEGIN
                     IF (mostrarNomsColumnes) THEN
                         RAISE INFO '  Dret Teòric Detall:';
                         RAISE INFO '';
-                        RAISE INFO '    Id      Efecte  Data Efecte          Quantitat  Modalitat  T.Pagament'; 
-                        RAISE INFO '    ------  ------  -------------------  ---------  ---------  ----------  ';
+                        RAISE INFO '    Id      Efecte  Data Efecte  Quantitat  Modalitat  T.Pagament'; 
+                        RAISE INFO '    ------  ------  -----------  ---------  ---------  ----------  ';
                         mostrarNomsColumnes := FALSE;
                     END IF;
                     RAISE INFO '    %  %  %  %  %  %', 
                                  RPAD(TO_CHAR(regDretTeoricDetall.id, 'fm9999999'), 6, ' '),               
                                  RPAD(TO_CHAR(regDretTeoricDetall.efecte_moviment_id, 'fm9999999'), 6, ' '),
-                                 TO_CHAR(regDretTeoricDetall.data_efecte, 'DD-MM-YYYY HH24:MI:SS'),
-                                 LPAD(TO_CHAR(regDretTeoricDetall.quantitat, 'fm99999990.00'), 9, ' '),
+                                 TO_CHAR(regDretTeoricDetall.data_efecte, 'DD-MM-YYYY'),
+                                 LPAD(TO_CHAR(regDretTeoricDetall.quantitat, 'fm99999990.00'), 10, ' '),
                                  LPAD(TO_CHAR(regDretTeoricDetall.modalitat_pagament_id, 'fm9999999'), 1, ' '),
                                  CASE WHEN regDretTeoricDetall.tipus_pagament_id IS NULL THEN LPAD('NULL', 12, ' ')
                                     ELSE LPAD(TO_CHAR(regDretTeoricDetall.tipus_pagament_id, 'fm9999999'), 9, ' ') END;
@@ -930,10 +930,9 @@ BEGIN
                 CLOSE cur_DretTeoricDetall;
                 IF (mostrarNomsColumnes) THEN
                     RAISE INFO '  Dret Teòric Detall: sense registres';
-                ELSE                        
-                    RAISE INFO '                                         ---------';
-                    RAISE INFO '    %', 
-                                 LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 46, ' ');
+                ELSE 
+					RAISE INFO '%', LPAD('---------', 42, ' ');
+                    RAISE INFO '%', LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 42, ' ');					
                     IF (numTotalRegistres > 1) THEN
                         RAISE INFO '    % registres.', numTotalRegistres;
                     ELSE 
@@ -1007,16 +1006,16 @@ BEGIN
                         IF (mostrarNomsColumnes) THEN
                             RAISE INFO '  Deute Detall:';
                             RAISE INFO '';
-                            RAISE INFO '    Id      Deute   Efecte  Data Efecte          Quantitat  Q.Negociada  Q.Condonada  Q.Aplicada  Data Execució'; 
-                            RAISE INFO '    ------  ------  ------  -------------------  ---------  -----------  -----------  ----------  -------------------';
+                            RAISE INFO '    Id      Deute   Efecte  Data Efecte  Quantitat  Q.Negociada  Q.Condonada  Q.Aplicada  Data Execució'; 
+                            RAISE INFO '    ------  ------  ------  -----------  ---------  -----------  -----------  ----------  -------------------';
                             mostrarNomsColumnes := FALSE;
                         END IF;
                         RAISE INFO '    %  %  %  %  %  %  %  %  %', 
                                      RPAD(TO_CHAR(regDeuteDetall.id, 'fm9999999'), 6, ' '),
                                      RPAD(TO_CHAR(regDeuteDetall.deute_id, 'fm9999999'), 6, ' '),
                                      RPAD(TO_CHAR(regDeuteDetall.efecte_moviment_nomina_id, 'fm9999999'), 6, ' '),
-                                     TO_CHAR(regDeuteDetall.data_efecte, 'DD-MM-YYYY HH24:MI:SS'),
-                                     LPAD(TO_CHAR(regDeuteDetall.quantitat, 'fm99999990.00'), 9, ' '),
+                                     TO_CHAR(regDeuteDetall.data_efecte, 'DD-MM-YYYY'),
+                                     LPAD(TO_CHAR(regDeuteDetall.quantitat, 'fm99999990.00'), 10, ' '),
                                      CASE WHEN regDeuteDetall.quantitat_negociada IS NULL THEN LPAD('NULL', 11, ' ')
                                         ELSE LPAD(TO_CHAR(regDeuteDetall.quantitat_negociada, 'fm99999990.00'), 11, ' ') END,
                                      CASE WHEN regDeuteDetall.quantitat_condonada IS NULL THEN LPAD('NULL', 11, ' ')
@@ -1042,10 +1041,10 @@ BEGIN
                     CLOSE cur_DeuteDetall;
                     IF (mostrarNomsColumnes) THEN
                         RAISE INFO '  Deute Detall: sense registres';
-                    ELSE                    
-                        RAISE INFO '                                                 ---------  -----------  -----------  ----------';
+                    ELSE
+						RAISE INFO '%', LPAD('---------  -----------  -----------  ----------', 88, ' ');
                         RAISE INFO '    %  %  %  %', 
-                                     LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 54, ' '),
+                                     LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 46, ' '),
                                      LPAD(TO_CHAR(sumaTotal2, 'fm99999990.00'), 11, ' '),
                                      LPAD(TO_CHAR(sumaTotal3, 'fm99999990.00'), 11, ' '),
                                      LPAD(TO_CHAR(sumaTotal4, 'fm99999990.00'), 10, ' ');
@@ -1071,15 +1070,15 @@ BEGIN
                         IF (mostrarNomsColumnes) THEN
                             RAISE INFO '  Percebut:';
                             RAISE INFO '';
-                            RAISE INFO '    Id      Rcd_Crt_Ts           Data Efecte          Imp.Percebut'; 
-                            RAISE INFO '    ------  -------------------  -------------------  ------------';
+                            RAISE INFO '    Id      Rcd_Crt_Ts           Data Efecte  Imp.Percebut'; 
+                            RAISE INFO '    ------  -------------------  -----------  ------------';
                             mostrarNomsColumnes := FALSE;
                         END IF;
                         RAISE INFO '    %  %  %  %', 
                                      RPAD(TO_CHAR(regPercebut.id, 'fm9999999'), 6, ' '),
                                      TO_CHAR(regPercebut.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'),
-                                     TO_CHAR(regPercebut.data_efecte, 'DD-MM-YYYY HH24:MI:SS'),
-                                     LPAD(TO_CHAR(regPercebut.import_percebut, 'fm99999990.00'), 12, ' ');
+                                     TO_CHAR(regPercebut.data_efecte, 'DD-MM-YYYY'),
+                                     LPAD(TO_CHAR(regPercebut.import_percebut, 'fm99999990.00'), 13, ' ');
                         sumaTotal1 := sumaTotal1 + regPercebut.import_percebut;
                         numTotalRegistres := numTotalRegistres + 1;
                     END LOOP;
@@ -1087,9 +1086,8 @@ BEGIN
                     IF (mostrarNomsColumnes) THEN
                         RAISE INFO '  Percebut: sense registres';
                     ELSE                        
-                        RAISE INFO '                                                      ------------';
-                        RAISE INFO '    %', 
-                                     LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 62, ' ');
+                        RAISE INFO '%', LPAD('------------',58, ' ');
+                        RAISE INFO '%', LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 58, ' ');
                         IF (numTotalRegistres > 1) THEN
                             RAISE INFO '    % registres.', numTotalRegistres;
                         ELSE 
@@ -1112,15 +1110,15 @@ BEGIN
                         IF (mostrarNomsColumnes) THEN
                             RAISE INFO '  Percebut Detall:';
                             RAISE INFO '';
-                            RAISE INFO '    Id      Act.Detall  Data Efecte          Quantitat  Modalitat  T.Pagament  Data Execució'; 
-                            RAISE INFO '    ------  ----------  -------------------  ---------  ---------  ----------  -------------------';
+                            RAISE INFO '    Id      Act.Detall  Data Efecte  Quantitat  Modalitat  T.Pagament  Data Execució'; 
+                            RAISE INFO '    ------  ----------  -----------  ---------  ---------  ----------  -------------------';
                             mostrarNomsColumnes := FALSE;
                         END IF;
                         RAISE INFO '    %  %  %  %  %  %  %', 
                                      RPAD(TO_CHAR(regPercebutDetall.id, 'fm9999999'), 6, ' '),
                                      RPAD(TO_CHAR(regPercebutDetall.activitat_detall_id, 'fm9999999'), 10, ' '),                             
-                                     TO_CHAR(regPercebutDetall.data_efecte, 'DD-MM-YYYY HH24:MI:SS'),
-                                     LPAD(TO_CHAR(regPercebutDetall.quantitat, 'fm99999990.00'), 9, ' '),
+                                     TO_CHAR(regPercebutDetall.data_efecte, 'DD-MM-YYYY'),
+                                     LPAD(TO_CHAR(regPercebutDetall.quantitat, 'fm99999990.00'), 10, ' '),
                                      LPAD(TO_CHAR(regPercebutDetall.modalitat_pagament_id, 'fm9999999'), 1, ' '),
                                      LPAD(TO_CHAR(regPercebutDetall.tipus_pagament_id, 'fm9999999'), 9, ' '),
                                      CASE WHEN regPercebutDetall.data_execucio IS NULL THEN LPAD('NULL', 28, ' ')
@@ -1132,9 +1130,8 @@ BEGIN
                     IF (mostrarNomsColumnes) THEN
                         RAISE INFO '  Percebut Detall: sense registres';
                     ELSE                                        
-                        RAISE INFO '                                             ---------';
-                        RAISE INFO '      %',
-                                     LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 48, ' ');
+                        RAISE INFO '%', LPAD('---------', 46, ' ');
+                        RAISE INFO '%', LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 46, ' ');
                         IF (numTotalRegistres > 1) THEN
                             RAISE INFO '    % registres.', numTotalRegistres;
                         ELSE 
@@ -1240,15 +1237,15 @@ BEGIN
                         IF (mostrarNomsColumnes) THEN
                             RAISE INFO '  Liquidat:';
                             RAISE INFO '';
-                            RAISE INFO '    Id      Ord.Pagament  Data Període         Data Execució        Data Efecte          Quantitat'; 
-                            RAISE INFO '    ------  ------------  -------------------  -------------------  -------------------  ---------';
+                            RAISE INFO '    Id      Ord.Pagament  Data Període  Data Execució        Data Efecte          Quantitat'; 
+                            RAISE INFO '    ------  ------------  ------------  -------------------  -------------------  ---------';
                             mostrarNomsColumnes := FALSE;
                         END IF;
                         RAISE INFO '    %  %  %  %  %  %', 
                                      RPAD(TO_CHAR(regLiquidat.id, 'fm9999999'), 6, ' '),
                                      RPAD(TO_CHAR(regLiquidat.ordenacio_pagament_id, 'fm9999999'), 12, ' '),
-                                     TO_CHAR(regLiquidat.data_periode, 'DD-MM-YYYY HH24:MI:SS'),
-                                     TO_CHAR(regLiquidat.data_execucio, 'DD-MM-YYYY HH24:MI:SS'),
+                                     TO_CHAR(regLiquidat.data_periode, 'DD-MM-YYYY'),
+                                     LPAD(TO_CHAR(regLiquidat.data_execucio, 'DD-MM-YYYY HH24:MI:SS'), 21, ' '),
                                      TO_CHAR(regLiquidat.data_efecte, 'DD-MM-YYYY HH24:MI:SS'),
                                      LPAD(TO_CHAR(regLiquidat.quantitat, 'fm99999990.00'), 9, ' ');
                         sumaTotal1 := sumaTotal1 + regLiquidat.quantitat;
@@ -1258,9 +1255,8 @@ BEGIN
                     IF (mostrarNomsColumnes) THEN
                         RAISE INFO '  Liquidat: sense registres';
                     ELSE                                        
-                        RAISE INFO '                                                                                         ---------';
-                        RAISE INFO '    %',
-                                     LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 94, ' ');
+                        RAISE INFO '%', LPAD('---------', 91, ' ');
+                        RAISE INFO '%', LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 91, ' ');
                         IF (numTotalRegistres > 1) THEN
                             RAISE INFO '    % registres.', numTotalRegistres;
                         ELSE 
