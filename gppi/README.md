@@ -33,7 +33,7 @@ Barcelona, July 10, 2020.
                 
     23/07/2020  Añadir totalizador de importes a la tabla eco_deute_detall.                             Versión 2.2                
                 
-    19/07/2020  Añadir posibilidad de ejecución con "dret_id" y "numeroExpedient".                      Versión 3.0
+    26/08/2020  Añadir posibilidad de ejecución con "dret_id" y "numeroExpedient".                      Versión 3.0
     
     03/09/2020  Añadir columna "deute_id" al listado de registros de la tabla "eco_deute_detall".       Versión 3.1
     
@@ -156,3 +156,4 @@ Barcelona, July 10, 2020.
                     CONTEXT:  función PL/pgSQL inline_code_block en la línea 147 en RAISE
                     SQL state: P0001    
                 
+
