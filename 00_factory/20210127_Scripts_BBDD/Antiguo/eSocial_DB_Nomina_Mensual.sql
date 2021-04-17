@@ -184,3 +184,16 @@ SELECT * FROM eco_nomina_mensual enm WHERE enm.tipus_nomina_id = 13 ORDER BY id 
 		IN (SELECT id FROM eco_nomina_mensual_procediment 
 			 WHERE nomina_mensual_id = 41 AND id > 340);
 		*/	
+        
+-------------------------------------
+-- Volver a la fase de Generació Q34
+-------------------------------------
+-- Tablas implicadas:
+SELECT * FROM eco_nomina_mensual enm WHERE enm.id = 67;
+SELECT * FROM eco_nomina_mensual_procediment enmp WHERE enmp.nomina_mensual_id = 67 ORDER BY enmp.id;
+SELECT * FROM eco_fitxer_pagaments_historic WHERE nomina_mensual_id = 67;
+
+-- Cambiar estado:
+DELETE FROM eco_fitxer_pagaments_historic WHERE nomina_mensual_id = 67;
+DELETE FROM eco_nomina_mensual_procediment enmp WHERE enmp.nomina_mensual_id = 67 AND id > 592;
+UPDATE eco_nomina_mensual SET estat = 'FQ34' WHERE id = 67;
