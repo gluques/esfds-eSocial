@@ -264,39 +264,7 @@ WHERE actdet.nomina_mensual_id = 55
 								     AND nomina_id = actdet.nomina_id)  																		
 ORDER BY actdet.nomina_id;
 
---
--- [05] TOTES LES NOMINES, ACTIVIDTATS DETALL I EFECTES
---
-SELECT DISTINCT actdet.nomina_id AS "Id Nòmina",
-		          actdet.id AS "Id Act.Detall",
-		          actdet.data_efecte AS "Data Efecte",
-		          actdet.quantitat AS "Quantitat",
-		          actdet.pagament_tipus_id AS "T.Pagament",
-		          efemovnom.id AS "Id Efecte",
-		          efemovnom.tipus_id AS "Id T.Efecte",
-		          efemovnom.import_actual AS "Imp.Actual",
-		          efemovnom.import_anterior AS "Imp.Anterior",
-		          efemovnom.diferencial AS "Diferencial",
-		          efemovnom.data_efecte_inici AS "D.Efecte Inici",
-		          act.tipus_incidencia_id AS "T.Incidencia",
-		          actdet.pagament_modalitat_id AS "Id Modalitat"
-FROM eco_activitat_detall actdet
-	JOIN eco_activitat act ON actdet.activitat_id = act.id
-	JOIN eco_moviment mov ON act.moviment_id = mov.id
-	JOIN eco_moviment_detall movdet ON mov.id = movdet.moviment_id,
-	eco_efecte_moviment_nomina efemovnom
-WHERE movdet.id = efemovnom.moviment_detall_id
-  AND actdet.nomina_mensual_id = 58
-  AND efemovnom.data_efecte_inici <= '2021-01-01 00:00:00'
-  AND (efemovnom.data_efecte_fi IS NULL OR efemovnom.data_efecte_fi >= actdet.data_efecte)
-  AND efemovnom.data_efecte_inici <= actdet.data_efecte
-  --AND efemovnom.tipus_id IN (1, 6)      -- Alta i Continuació d'Alta
-  --AND efemovnom.tipus_id IN (3, 16)     -- Baixa i Continuació de Baixa
-  --AND efemovnom.tipus_id IN (19, 20)    -- Modificació i Continuació de Modificació
-  --AND efemovnom.tipus_id IN (2, 15)     -- Rehabilitació i Continuació de Rehabilitació
-  --AND actdet.nomina_id IN (308, 309, 310, 311, 312, 313, 314, 315)    
-  --AND actdet.pagament_modalitat_id = 2
-ORDER BY actdet.nomina_id, actdet.data_efecte;
+
 --
 -- [06] TOTES LES NOMINES Y EFECTES
 --

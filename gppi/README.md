@@ -125,35 +125,16 @@ Barcelona, July 10, 2020.
                     
     15/04/2021  Ordenar tabla Efecte Moviment Nòmina por "Data Inici", "moviment_detall_id" y "Id".     Versión 5.2
     
-    15/04/2021  Cuando no existe el ID de la Prestación o el Número de expedient, se debería 
-                retornar un mensaje diferente a los siguientes:
+    15/04/2021  Mejora en la estructura de bloques del script con la que se obtiene un conjunto         Versión 6.0
+                más detallado de mensajes de error, por ejemplo cuando no existe el Id de la 
+                prestación o el número de expediente.   
                 
-                1. Indico Id Prestación que no existe:
+    19/04/2021  Aunque no se disponga de "dret" se muestra el contenido de la tabla Prestació           Versión 6.0
+                Reserva lo que permite mostrar información de la prestación en la fase de 
+                reserva de la actuación en nómina.    
                 
-                    INFO:  --------------------------------------------------------------
-                    INFO:   Script eSocial gPPI v.5.1 release 20210329
-                    INFO:  
-                    INFO:   Payroll Performance Information created by gluques.
-                    INFO:   2020-2021 - Economic eSocial Project.
-                    INFO:  
-                    INFO:      Resum dades prestació:
-                    INFO:        Num.Expedient......: <NULL>
-                    INFO:        Exp.Prestació......: <NULL>
-                    INFO:        Procediment........: <NULL>
-                    INFO:        Tramit.............: <NULL>
-                    INFO:        Prestació..........: 13646
-                    INFO:        Persona............: <NULL>
-                    INFO:        Tipus prestació....: <NULL>
-                    INFO:  
-                    INFO:      Data execució script: 2021-04-15 09:31:36
-                    INFO:  --------------------------------------------------------------
-                    INFO:  ATENCIÓ: La prestació no disposa de dret.
-                    INFO:  --------------------------------------------------------------
+    19/04/2021  Se añade a la cabecera información sobre la última nómina mensual aunque no exista      Versión 6.0
+                "dret" para la prestación indicada.
                 
-                2. Indico Número de Expedient que no existe:
                 
-                    ERROR:  No és possible obtenir la prestació associada al número d''expedient indicat
-                    CONTEXT:  función PL/pgSQL inline_code_block en la línea 147 en RAISE
-                    SQL state: P0001    
                 
-
