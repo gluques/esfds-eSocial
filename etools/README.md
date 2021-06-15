@@ -12,10 +12,14 @@ Barcelona, September 10, 2020
                     Opción "-ry" para restaurar los ficheros YML.
                     Opción "--help" muestra ayuda.
                     
-    27/01/2021      Opción "-cf" para clonar los repositorios de frontal "eSocial-Core-Front"           PENDIENTE
+    27/01/2021      Opción "-cf" para clonar los repositorios de frontal "eSocial-Core-Front"           No implementado
                     y "portal-empleat-public-front"
                     
-    27/01/2021      Hacer que la opción "-av" muetre la "rama" activa de los artefactos.                PENDIENTE
+    27/01/2021      Hacer que la opción "-av" muetre la "rama" activa de los artefactos.                No implementado
                     Comando "git branch --show-current"
                     
-    28/01/2021      Refactorización del código para el tratamiento de sub-parámetros.                   PENDIENTE
+    28/01/2021      Refactorización del código para el tratamiento de sub-parámetros.                   No implementado
+    
+    15/06/2021      Inicio el proyecto desde cero con el único comando "-la" que permite                Version 2.0
+                    mostrar las versiones de los artefactos en los entornos de master,
+                    sub_master y dev.

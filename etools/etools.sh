@@ -1,77 +1,86 @@
 ####################################################################################################################################
-# eTtools - eSocial Tools v.1.0 2020
+# eTtools - eSocial Tools v.2.0 2020-21 release 20210615
 #
 # Created by gluques
 # Barcelona, November 20, 2020.
+#
+# Last updated on 15/06/2021
+#
 ####################################################################################################################################
-
 # ------------------------------------------------------------------------------------------
-# CONSTANTS
+# Global variables
 # ------------------------------------------------------------------------------------------
+# ----------------------------------------------
+# Date and Time
+# ----------------------------------------------
 YEAR=`date +%Y`
 MONTH=`date +%m`
 DAY=`date +%d`
 HOUR=`date +%H`
 MINUTE=`date +%M`
 SECOND=`date +%S`
-
-# ------------------------------------------------------------------------------------------
-# Global variables
-# ------------------------------------------------------------------------------------------
-# Paths:
-base_root_path="C:/gluques"
-base_gtools_path="$base_root_path/srcown/esfds-eSocial/etools"
-base_artifacts_path="$base_root_path/src"
-yml_local_jpa_bck_file="$base_gtools_path/bckyml/application-local_jpa.yml"
-yml_local_jpa_restore_path="$base_artifacts_path/esocial-jpa-repositories/src/main/resources/application-local.yml"
-yml_local_back_bck_file="$base_gtools_path/bckyml/application-local_back.yml"
-yml_local_back_restore_path="$base_artifacts_path/portal-empleat-public-back/src/main/resources/config/application-local.yml"
-
+# ----------------------------------------------
+# Foreground colors
+# ----------------------------------------------
+FG_LIGHT_BLUE_COLOR="\e[94m"
+FG_RED_COLOR="\e[31m"
+FG_YELLOW_COLOR="\e[33m"
+# ----------------------------------------------
+# Paths
+# ----------------------------------------------
+ROOT_FOLDER_PATH_ARTIFACTS="C:/gluques/src"
+ROOT_FOLDER_PATH_ARTIFACTS_MASTER="$ROOT_FOLDER_PATH_ARTIFACTS/master"
+ROOT_FOLDER_PATH_ARTIFACTS_SUB_MASTER="$ROOT_FOLDER_PATH_ARTIFACTS/sub_master"
+ROOT_FOLDER_PATH_ARTIFACTS_DEV="$ROOT_FOLDER_PATH_ARTIFACTS/dev"
+# ----------------------------------------------
+# File names
+# ----------------------------------------------
+ARTIFACTS_VERSION_FILE="pom.xml"
+# ----------------------------------------------
 # Arrays:
-declare -a arrayVersions=("eSocial-Core-Front" 
-                          "esocial-dynamic-blocks" 
-                          "esocial-jpa-repositories" 
-                          "esocial-services" 
-                          "portal-ciutada-back" 
-                          "portal-empleat-public-back" 
-                          "portal-empleat-public-front")
-arrayVersionsLength=${#arrayVersions[@]}                          
-                          
-declare -a arrayYMLRestore=("esocial-jpa-repositories"
-                            "portal-empleat-public-back")
-
-# Artifacts version file and tags:
-artifacts_version_file="pom.xml"
-artifacts_initial_tag="<version>"
-artifacts_final_tag="</version>"
-
-# Colors:
-fg_default_color="\e[39m"
-fg_red_color="\e[31m"
-fg_green_color="\e[32m"
-fg_yellow_color="\e[33m"
-fg_white_color="\e[97m"
-fg_light_blue_color="\e[94m"
-
-bg_default_color="\e[49m"
-bg_green_color="\e[42m"
-
-#Prompt:
-PROMPT="[gt-$DAY-$MONTH-$YEAR $HOUR:$MINUTE:$SECOND]"
-
+# ----------------------------------------------
+declare -a arrayArtifacts=("esocial-dynamic-blocks"
+                           "esocial-jpa-repositories"
+                           "esocial-services" 
+                           "portal-empleat-public-back" 
+                           "portal-ciutada-back" 
+                           "eSocial-Core-Front" 
+                           "portal-empleat-public-front")
+arrayArtifactsLength=${#arrayArtifacts[@]}
 # ------------------------------------------------------------------------------------------
 # Functions
 # ------------------------------------------------------------------------------------------
 # ----------------------------------------------
 # Show Version Artifacts:
 # ----------------------------------------------
-function showVersionArtifacts() {    
-    echo -e "$PROMPT Version of the artifacts:"
-    echo
-    printf "\t> Source code root path: $base_artifacts_path\n\n"    
-    for (( i=1; i<${arrayVersionsLength}+1; i++ ));
+function showVersionArtifacts() { 
+    if [[ $1 == "mas" ]]        
+    then
+        root_path=$ROOT_FOLDER_PATH_ARTIFACTS_MASTER
+    elif [[ $1 == "sub" ]];        
+    then    
+        root_path=$ROOT_FOLDER_PATH_ARTIFACTS_SUB_MASTER
+    else
+        root_path=$ROOT_FOLDER_PATH_ARTIFACTS_DEV
+    fi
+    printf "$FG_LIGHT_BLUE_COLOR%s: $root_path\n" "Root folder path of artifacts"
+    printf "List of artifacts:\n\n"
+    printf "%0.s " {1..5}
+    printf "Artifact name\t\t\tVersion\t\tBranch\n"
+    printf "%0.s " {1..5}
+    printf "%0.s-" {1..30} 
+    printf "\t"
+    printf "%0.s-" {1..14} 
+    printf "\t"
+    printf "%0.s-" {1..40} 
+    printf "\n"    
+    artifactReferenceId=1
+    for (( i=1; i<${arrayArtifactsLength}+1; i++ ));
     do          
-        version_file_path="$base_artifacts_path/${arrayVersions[$i-1]}/$artifacts_version_file"        
+        path="$root_path/${arrayArtifacts[$i-1]}"        
+        cd $path        
+        branch="$(git branch --show-current)"
+        version_file_path="$path/$ARTIFACTS_VERSION_FILE"        
         searching=1        
         while IFS= read -r line && [[ searching -eq 1 ]]
         do        
@@ -83,77 +92,91 @@ function showVersionArtifacts() {
                 searching=0
             fi
         done <"$version_file_path"  
-        if [[ searching -eq 0 ]]
+        if [[ searching -ne 0 ]]
         then
-            printf "\t> ${arrayVersions[$i-1]} $version\n"
-        else
-            printf "\t> ${arrayVersions[$i-1]} [No version]\n"
-        fi
-    done
-}
-# ----------------------------------------------
-# Restore Application Local Files
-# ----------------------------------------------
-function restoreAppLocalFiles() {
-    echo -e "$fg_light_blue_color$PROMPT Restore application local YML files:"
-    echo
-    printf "\t> Application file for Back:\t$yml_local_back_bck_file\n"
-    printf "\t> Destination path Back file:\t$yml_local_back_restore_path\n"
-    cp -r $yml_local_back_bck_file $yml_local_back_restore_path
-    if [[ ! $? -eq 0 ]]
-    then
-        echo -e "$fg_red_color\t> ERROR: file cannot be copied."                
-    else     
-        echo -e "\t> File copied successfully."                    
-    fi
-    echo
-    printf "$fg_light_blue_color\t> Application file for JPA:\t$yml_local_jpa_bck_file\n"
-    printf "\t> Destination path JPA file:\t$yml_local_jpa_restore_path\n"
-    cp -r $yml_local_jpa_bck_file $yml_local_jpa_restore_path
-    if [[ ! $? -eq 0 ]]
-    then        
-        echo -e "$fg_red_color\t> ERROR: file cannot be copied."                
-    else     
-        echo -e "\t> File copied successfully."                    
-    fi
+            version="Unknown"
+        fi                
+        length=${#arrayArtifacts[$i-1]}        
+        if [[ $length -lt  19 ]]
+        then
+            printf " (%d) %s\t\t\t%s\t\t%s\n" $artifactReferenceId "${arrayArtifacts[$i-1]}" "$version" "$branch"
+        elif [[ $length -gt 26 ]]
+        then
+            printf " (%d) %s\t%s\t\t%s\n" $artifactReferenceId "${arrayArtifacts[$i-1]}" "$version" "$branch"
+        else        
+            printf " (%d) %s\t\t%s\t\t%s\n" $artifactReferenceId "${arrayArtifacts[$i-1]}" "$version" "$branch"
+        fi        
+        artifactReferenceId=$((artifactReferenceId+1))
+    done    
 }
 # ----------------------------------------------
 # Script Show Help:
 # ----------------------------------------------
-function showHelp() {
-    echo -e "$PROMPT eTools Help:"
-    echo
-    printf " Usage: etools [OPTION]\n"
-    printf " Options:\n"    
-    printf "\t-av\t\tShow artifacts version.\n"    
-    echo
-    printf "\t-ry\t\tRestore the 'application-local.yml' file for the following projects:\n"
-    arrayVersionsLength=${#arrayYMLRestore[@]}
-    for (( i=1; i<${arrayVersionsLength}+1; i++ ));
+function showHelp() {    
+    printf "\n$FG_LIGHT_BLUE_COLOR%s\n" " Usage: etools command"
+    printf "%s\n\n" " Commands:"   
+    printf "   -la enviroment\t\tDisplays the version of the artifacts available for the specified environment.\n"    
+    printf "\t\t\t\tEnviroment values: 'mas', 'sub' or 'dev'\n"    
+    printf "\n%s\n\n" " Internal constants:"
+    printf "   Path artifacts:\t\t$ROOT_FOLDER_PATH_ARTIFACTS\n"
+    printf "   Path artifacts master:\t$ROOT_FOLDER_PATH_ARTIFACTS_MASTER\n"
+    printf "   Path artifacts sub_master:\t$ROOT_FOLDER_PATH_ARTIFACTS_SUB_MASTER\n"
+    printf "   Path artifacts development:\t$ROOT_FOLDER_PATH_ARTIFACTS_DEV\n"
+    printf "   Artifacts version file:\t$ARTIFACTS_VERSION_FILE\n"
+    printf "   List of artifacts:\n"
+    for (( i=1; i<${arrayArtifactsLength}+1; i++ ));
     do
-        printf "\t\t\t  - ${arrayYMLRestore[$i-1]}\n"
+        printf "   \t\t\t\t${arrayArtifacts[$i-1]}\n"
     done
-    echo
+}
+# ----------------------------------------------
+# Check command parameters
+# ----------------------------------------------
+function checkParametersVersionArtifacts() {    
+    check=0
+    if [[ $1 > 1 && $1 < 3 ]]
+    then
+        if [[ $2 == "mas" || $2 == "sub" || $2 == "dev" ]]
+        then 
+            check=1
+        else 
+            echo -e "$FG_RED_COLOR""Error: the environment '$2' is not correct."
+            echo -e "$FG_YELLOW_COLOR""Try 'etools --help' for more information."
+        fi
+    else 
+        echo -e "$FG_RED_COLOR""Error: wrong number of parameters."
+        echo -e "$FG_YELLOW_COLOR""Try 'etools --help' for more information."
+    fi
+    return $check
+}
+# ----------------------------------------------
+# Check command
+# ----------------------------------------------
+function checkCommand() {
+    #printf "Params: $1 - $2 - $3 -$4 - $5 - $6 - $7 - $8 - $9\n"
+    case $2 in 
+        '--help') 
+            showHelp;;
+        '-la') 
+            checkParametersVersionArtifacts $1 $3
+            if [[ $? == 1 ]]
+            then
+                showVersionArtifacts $3
+            fi;;
+    *)
+        echo -e "$FG_RED_COLOR""Error: unknown command '$2'."
+        echo -e "$FG_YELLOW_COLOR""Try 'etools --help' for more information."
+    esac
 }
 # ------------------------------------------------------------------------------------------
 # Script main
 # ------------------------------------------------------------------------------------------
-echo -e "$fg_light_blue_color$PROMPT eTools v.1.0 2020 by gluques";
-if [[ $# == 1 ]]
+echo -e "$FG_LIGHT_BLUE_COLOR""eTools v.2.0 release 20210615 by gluques";
+if [[ $# > 0 ]]
 then
-    case $@ in 
-    '--help')
-        showHelp;;
-    '-av') 
-        showVersionArtifacts;;    
-    '-ry')
-        restoreAppLocalFiles;; 
-    *)
-        echo -e "$fg_red_color$PROMPT ERROR: unknown command '$@'."
-        echo -e "$fg_light_blue_color$PROMPT Use the --help parameter for help.";;
-    esac
+    checkCommand $# $@
 else
-    echo -e "$fg_red_color$PROMPT ERROR: incorrect number of arguments."
-    echo -e "$fg_light_blue_color$PROMPT Use the --help parameter for help."
+    echo -e "$FG_RED_COLOR""Error: an argument is required."
+    echo -e "$FG_YELLOW_COLOR""Try 'etools --help' for more information."
 fi
 
