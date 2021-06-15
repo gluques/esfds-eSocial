@@ -702,10 +702,10 @@ BEGIN
                 RAISE INFO ' %  %  %  %  %  %', 
                              LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 23, ' '),
                              LPAD(TO_CHAR(sumaTotal2, 'fm99999990.00'), 11, ' '),
-                             LPAD(TO_CHAR(sumaTotal3, 'fm99999990.00'), 11, ' '),
-                             LPAD(TO_CHAR(sumaTotal4, 'fm99999990.00'), 11, ' '),
-                             LPAD(TO_CHAR(sumaTotal5, 'fm99999990.00'), 11, ' '),
-                             LPAD(TO_CHAR(sumaTotal6, 'fm99999990.00'), 10, ' ');
+                             LPAD(TO_CHAR(sumaTotal3, 'fm99999990.00'), 10, ' '),
+                             LPAD(TO_CHAR(sumaTotal4, 'fm99999990.00'), 9, ' '),
+                             LPAD(TO_CHAR(sumaTotal5, 'fm99999990.00'), 13, ' '),
+                             LPAD(TO_CHAR(sumaTotal6, 'fm99999990.00'), 11, ' ');
 				RAISE INFO '';
                 IF (numTotalRegistres > 1) THEN
                     RAISE INFO '    % registres.', numTotalRegistres;
