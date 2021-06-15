@@ -29,7 +29,7 @@ FG_YELLOW_COLOR="\e[33m"
 # Paths
 # ----------------------------------------------
 ROOT_FOLDER_PATH_ETOOLS="C:/gluques/srcown/esfds-eSocial/etools";
-ROOT_FOLDER_PATH_ARTIFACTS="C:/gluques/src"
+#ROOT_FOLDER_PATH_ARTIFACTS="C:/gluques/src"
 # ----------------------------------------------
 # File names
 # ----------------------------------------------
@@ -51,8 +51,10 @@ arrayArtifactsLength=${#arrayArtifacts[@]}
 # ----------------------------------------------
 # Show Version Artifacts:
 # ----------------------------------------------
-function showVersionArtifacts() {  
-    printf "$FG_LIGHT_BLUE_COLOR%s: $ROOT_FOLDER_PATH_ARTIFACTS\n" "Root folder path of artifacts"      
+function showVersionArtifacts() { 
+    #printf "Params: $1 - $2 - $3 -$4 - $5 - $6 - $7 - $8 - $9\n"    
+    ROOT_FOLDER_PATH_ARTIFACTS=$1 
+    printf "$FG_LIGHT_BLUE_COLOR%s: $ROOT_FOLDER_PATH_ARTIFACTS\n" "Root folder path of artifacts"
     printf "List of artifacts:\n\n"
     printf "%0.s " {1..5}
     printf "Artifact name\t\t\tVersion\t\tBranch\n"
@@ -113,7 +115,7 @@ function checkCommand() {
     #printf "Params: $1 - $2 - $3 -$4 - $5 - $6 - $7 - $8 - $9\n"
     case $2 in 
         '--help') showHelp;;
-        '-la') showVersionArtifacts;;
+        '-la') showVersionArtifacts $3;;
     *)
         echo -e "$fg_red_color""Error: unknown command '$2'."
         echo -e "$fg_yellow_color""Try 'etools --help' for more information."
