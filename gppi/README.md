@@ -136,5 +136,21 @@ Barcelona, July 10, 2020.
     19/04/2021  Se añade a la cabecera información sobre la última nómina mensual aunque no exista      Versión 6.0
                 "dret" para la prestación indicada.
                 
+    04/05/2021  Cuando la columna "Liquidació" vale "True" se produce una desalineación con el          Versión 6.1
+                campo "Rcd Crt Ts" de la tabla "Activitat". 
                 
+    04/05/2021  Añadir totalizadores a la tabla "Dret Reserva".                                         Versión 6.1
+    
+    18/05/2021  Modificar el resumen de la cabecera tabulando los campos correspondientes a cada        Versión 6.1
+                entidad según su pertinencia.
+                
+    18/05/2021  Crear flag para configuración de vistas pre-establecidas. Crear vista Reserva.          Versión 6.1
+    
+    31/05/2021  Ordenar los registros tabla efectos por fecha de creación e Id.                         Versión 6.1
+                
+    15/06/2021  Añadir nuevo campo "pagament_modalitat_id" a la tabla "Deute Detall"                    Versión 6.1            
+                
+                
+    
+    
                 

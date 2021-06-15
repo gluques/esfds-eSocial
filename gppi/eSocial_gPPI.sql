@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------------------------
 --  eSocial_gPPI.sql                                                                                               --
---	Payroll Performance Information - v.6.0 release 20210419     												   --	
+--	Payroll Performance Information - v.6.1 release 20210419     												   --	
 --  						  																					   --	
 --																						   						   --	
 --  Created by Gregorio Luque Serrano.      	   								   		                           --
@@ -16,15 +16,19 @@ DECLARE
     --
     -- File identification parameters:
     --
-    prestacioId INTEGER := 627;
+    prestacioId INTEGER := 629;
     dretId INTEGER := NULL;
 	numeroExpedient TEXT := NULL;
     --
+    -- Information views:
+    --
+    vistaReserva BOOLEAN := FALSE;
+    --
     -- Checkers to display blocks of information:
     --
-    mostrarNomesHeader BOOLEAN := FALSE;
-    mostrarResumImportsTaules BOOLEAN := TRUE;
+    mostrarNomesHeader BOOLEAN := FALSE;    
     mostrarInformaciSituacio BOOLEAN := TRUE;
+    mostrarResumImportsTaules BOOLEAN := TRUE;
     mostrarDadesTaules BOOLEAN := TRUE;
     --
     -- Checkers to display specific situation information:
@@ -65,7 +69,7 @@ DECLARE
     cur_Moviment_Detall CURSOR(p_idNomina INTEGER) FOR
         SELECT * FROM eco_moviment_detall WHERE nomina_id = p_idNomina ORDER BY moviment_id, data_efecte_inicial, id;        
     cur_EfecteMovimentNomina CURSOR(p_idDret INTEGER) FOR
-		SELECT * FROM eco_efecte_moviment_nomina WHERE dret_id = p_idDret ORDER BY data_efecte_inici, moviment_detall_id, id;    
+		SELECT * FROM eco_efecte_moviment_nomina WHERE dret_id = p_idDret ORDER BY id, moviment_detall_id, data_efecte_inici;    
     cur_Activitat CURSOR(p_idDret INTEGER) FOR
 		SELECT * FROM eco_activitat WHERE dret_id = p_idDret ORDER BY moviment_id, data_efecte_inicial, id;        
     cur_ActivitatDetall CURSOR(p_idNomina INTEGER) FOR
@@ -130,6 +134,8 @@ DECLARE
     sumaTotal2 DECIMAL;
     sumaTotal3 DECIMAL;
     sumaTotal4 DECIMAL;
+    sumaTotal5 DECIMAL;
+    sumaTotal6 DECIMAL;
     numTotalRegistres INTEGER;
     descripcio TEXT := NULL;
     importsPositius DECIMAL;
@@ -141,11 +147,36 @@ BEGIN
     -- Script header:
     -------------------------------------------------------------------------------    
     RAISE INFO '----------------------------------------------------------------------------------------------------------------------------';
-	RAISE INFO ' Script eSocial gPPI v.6.0 release 20210419';
+	RAISE INFO ' Script eSocial gPPI v.6.1 release 20210519';
     RAISE INFO '';
     RAISE INFO ' Payroll Performance Information created by gluques.';    
     RAISE INFO ' 2020-2021 - Economic eSocial Project.';
     RAISE INFO '';
+    -------------------------------------------------------------------------------
+    -- Information views:
+    -------------------------------------------------------------------------------
+    IF (vistaReserva) THEN
+        mostrarInformaciSituacio := FALSE;
+        mostrarResumImportsTaules:= TRUE;
+        mostrarDadesTaules := TRUE;
+        mostrarPrestacioReserva := TRUE;
+        mostrarDretReserva := TRUE;
+        mostrarMoviment := FALSE;
+        mostrarContingutMoviment := FALSE;
+        mostrarMovimentDetall := FALSE;
+        mostrarEfecteMovimentNomina := TRUE;
+        mostrarActivitat := TRUE;
+        mostrarActivitatDetall := FALSE;
+        mostrarDretTeoric := TRUE;
+        mostrarDretTeoricDetall := TRUE;
+        mostrarDeute := TRUE;
+        mostrarDeuteDetall := TRUE;
+        mostrarPercebut := FALSE;
+        mostrarPercebutDetall := FALSE;
+        mostrarOrdenacioPagament := FALSE;
+        mostrarOrdenacioPagamentDetall := FALSE;
+        mostrarLiquidat := FALSE;  
+    END IF;
     -------------------------------------------------------------------------------
     -- Checking input parameters:
     -------------------------------------------------------------------------------
@@ -249,15 +280,15 @@ BEGIN
             JOIN llistat_valors lv ON etn.llistat_valors_id = lv.id
             JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
             WHERE etn.id = regNomina.tipus_nomina_id;
-            RAISE INFO '      Tipus..............: % [%]', descripcio, regNomina.tipus_nomina_id;
-            RAISE INFO '      Alta...............: %', TO_CHAR(regNomina.data_alta_nomina, 'DD-MM-YYYY HH24:MI:SS');
-            RAISE INFO '      Primera execució...: %', TO_CHAR(regNomina.data_primera_execucio, 'DD-MM-YYYY HH24:MI:SS');
-            RAISE INFO '      Efecte inici.......: %', TO_CHAR(regNomina.data_efecte_inici, 'DD-MM-YYYY');
+            RAISE INFO '        Tipus............: % [%]', descripcio, regNomina.tipus_nomina_id;
+            RAISE INFO '        Alta.............: %', TO_CHAR(regNomina.data_alta_nomina, 'DD-MM-YYYY HH24:MI:SS');
+            RAISE INFO '        Primera execució.: %', TO_CHAR(regNomina.data_primera_execucio, 'DD-MM-YYYY HH24:MI:SS');
+            RAISE INFO '        Efecte inici.....: %', TO_CHAR(regNomina.data_efecte_inici, 'DD-MM-YYYY');
             SELECT lvi.descripcio INTO descripcio FROM eco_estat_nomina een
             JOIN llistat_valors lv ON een.llistat_valors_id = lv.id
             JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
             WHERE een.id = regNomina.estat_id;
-            RAISE INFO '      Estat..............: % [%]', descripcio, regNomina.estat_id;     
+            RAISE INFO '        Estat............: % [%]', descripcio, regNomina.estat_id;     
             -- Informació Moviment:
             SELECT * INTO regMoviment FROM eco_moviment 
             WHERE id IN (SELECT DISTINCT moviment_id FROM eco_moviment_detall WHERE nomina_id = nominaId) 
@@ -271,14 +302,14 @@ BEGIN
             JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
             WHERE ten.id = regEfecteMovimentNomina.tipus_id;        
             RAISE INFO '      Últim efecte.......: %', TO_CHAR(regEfecteMovimentNomina.data_efecte_inici, 'DD-MM-YYYY');
-            RAISE INFO '      Tipus efecte.......: % [%]', descripcio, regEfecteMovimentNomina.tipus_id;        
-            RAISE INFO '      Import actual......: %', TO_CHAR(regEfecteMovimentNomina.import_actual, 'fm99999990.00');
-            RAISE INFO '      Import anterior....: %', TO_CHAR(regEfecteMovimentNomina.import_anterior, 'fm99999990.00');
+            RAISE INFO '        Tipus efecte.....: % [%]', descripcio, regEfecteMovimentNomina.tipus_id;        
+            RAISE INFO '        Import actual....: %', TO_CHAR(regEfecteMovimentNomina.import_actual, 'fm99999990.00');
+            RAISE INFO '        Import anterior..: %', TO_CHAR(regEfecteMovimentNomina.import_anterior, 'fm99999990.00');
             -- Informació Últim Percebut:
             SELECT * INTO regPercebut FROM eco_percebut 
             WHERE nomina_id = nominaId ORDER BY data_efecte DESC LIMIT 1;        
             RAISE INFO '      Últim percebut.....: %', TO_CHAR(regPercebut.data_efecte, 'DD-MM-YYYY');
-            RAISE INFO '      Import percebut....: %', TO_CHAR(regPercebut.import_percebut, 'fm99999990.00');
+            RAISE INFO '        Import percebut..: %', TO_CHAR(regPercebut.import_percebut, 'fm99999990.00');
             -- SQL Última Nòmina Mensual:
             SELECT * INTO regNominaMensual FROM eco_nomina_mensual 
             WHERE tipus_nomina_id = regNomina.tipus_nomina_id ORDER BY data_nomina DESC LIMIT 1;            
@@ -298,9 +329,9 @@ BEGIN
         IF (regNominaMensual IS NOT NULL) THEN
             -- Informació Última Nòmina Mensual:
             RAISE INFO '      Última nòm.mensual.: %', regNominaMensual.id;
-            RAISE INFO '      Data generació.....: %', TO_CHAR(regNominaMensual.data_inici_generacio, 'DD-MM-YYYY HH24:MI:SS');
-            RAISE INFO '      Data nòmina........: %', TO_CHAR(regNominaMensual.data_nomina, 'DD-MM-YYYY');        
-            RAISE INFO '      Estat nòmina.......: ''%''', regNominaMensual.estat;
+            RAISE INFO '        Data generació...: %', TO_CHAR(regNominaMensual.data_inici_generacio, 'DD-MM-YYYY HH24:MI:SS');
+            RAISE INFO '        Data nòmina......: %', TO_CHAR(regNominaMensual.data_nomina, 'DD-MM-YYYY');        
+            RAISE INFO '        Estat nòmina.....: ''%''', regNominaMensual.estat;
         END IF;
         RAISE INFO '';        
     END IF;
@@ -628,6 +659,12 @@ BEGIN
         IF (mostrarDretReserva AND dretId IS NOT NULL) THEN
             RAISE INFO '';        
             mostrarNomsColumnes := TRUE;
+            sumaTotal1 := 0;
+            sumaTotal2 := 0;
+            sumaTotal3 := 0;
+            sumaTotal4 := 0;
+            sumaTotal5 := 0;
+            sumaTotal6 := 0;            
             numTotalRegistres := 0;
             OPEN cur_DretReserva(dretId);   
             LOOP	
@@ -649,13 +686,27 @@ BEGIN
                              LPAD(TO_CHAR(regDretReserva.import_recuperat, 'fm99999990.00'), 13, ' '),
                              LPAD(TO_CHAR(regDretReserva.import_restant, 'fm99999990.00'), 11, ' '),
                              TO_CHAR(regDretReserva.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS');
+                sumaTotal1 := sumaTotal1 + regDretReserva.import_reservat;
+                sumaTotal2 := sumaTotal2 + regDretReserva.import_ordenat;
+                sumaTotal3 := sumaTotal3 + regDretReserva.import_trames;
+                sumaTotal4 := sumaTotal4 + regDretReserva.import_pagat;
+                sumaTotal5 := sumaTotal5 + regDretReserva.import_recuperat;
+                sumaTotal6 := sumaTotal6 + regDretReserva.import_restant;
                 numTotalRegistres := numTotalRegistres + 1;
             END LOOP;
             CLOSE cur_DretReserva;
             IF (mostrarNomsColumnes) THEN
                 RAISE INFO '  Dret Reserva: sense registres';
             ELSE
-                RAISE INFO '';
+                RAISE INFO '%', LPAD('            ------------  -----------  ----------  ---------  -------------  -----------  ', 88, ' ');
+                RAISE INFO ' %  %  %  %  %  %', 
+                             LPAD(TO_CHAR(sumaTotal1, 'fm99999990.00'), 23, ' '),
+                             LPAD(TO_CHAR(sumaTotal2, 'fm99999990.00'), 11, ' '),
+                             LPAD(TO_CHAR(sumaTotal3, 'fm99999990.00'), 11, ' '),
+                             LPAD(TO_CHAR(sumaTotal4, 'fm99999990.00'), 11, ' '),
+                             LPAD(TO_CHAR(sumaTotal5, 'fm99999990.00'), 11, ' '),
+                             LPAD(TO_CHAR(sumaTotal6, 'fm99999990.00'), 10, ' ');
+				RAISE INFO '';
                 IF (numTotalRegistres > 1) THEN
                     RAISE INFO '    % registres.', numTotalRegistres;
                 ELSE 
@@ -838,7 +889,7 @@ BEGIN
                              CASE WHEN regActivitat.arxivat THEN LPAD(TO_CHAR(regActivitat.pagament_modalitat_id, 'fm9999999'), 4, ' ') 
                                 ELSE LPAD(TO_CHAR(regActivitat.pagament_modalitat_id, 'fm9999999'), 3, ' ') END,                             
                              CASE WHEN regActivitat.liquidacio THEN LPAD('TRUE', 12, ' ') ELSE LPAD('FALSE', 13, ' ') END,
-                             CASE WHEN regActivitat.liquidacio THEN LPAD(TO_CHAR(regActivitat.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'), 23, ' ')
+                             CASE WHEN regActivitat.liquidacio THEN LPAD(TO_CHAR(regActivitat.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'), 25, ' ')
                                 ELSE LPAD(TO_CHAR(regActivitat.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'), 24, ' ') END;
                 numTotalRegistres := numTotalRegistres + 1;
             END LOOP;
@@ -1048,11 +1099,11 @@ BEGIN
                 IF (mostrarNomsColumnes) THEN
                     RAISE INFO '  Deute Detall:';
                     RAISE INFO '';
-                    RAISE INFO '    Id      Deute   Efecte  Data Efecte  Quantitat  Q.Negociada  Q.Condonada  Q.Aplicada  Data Execució'; 
-                    RAISE INFO '    ------  ------  ------  -----------  ---------  -----------  -----------  ----------  -------------------';
+                    RAISE INFO '    Id      Deute   Efecte  Data Efecte  Quantitat  Q.Negociada  Q.Condonada  Q.Aplicada  Modalitat  Data Execució'; 
+                    RAISE INFO '    ------  ------  ------  -----------  ---------  -----------  -----------  ----------  ---------  -------------------';
                     mostrarNomsColumnes := FALSE;
                 END IF;
-                RAISE INFO '    %  %  %  %  %  %  %  %  %', 
+                RAISE INFO '    %  %  %  %  %  %  %  %  %  %', 
                              RPAD(TO_CHAR(regDeuteDetall.id, 'fm9999999'), 6, ' '),
                              RPAD(TO_CHAR(regDeuteDetall.deute_id, 'fm9999999'), 6, ' '),
                              RPAD(TO_CHAR(regDeuteDetall.efecte_moviment_nomina_id, 'fm9999999'), 6, ' '),
@@ -1064,6 +1115,7 @@ BEGIN
                                 ELSE LPAD(TO_CHAR(regDeuteDetall.quantitat_condonada, 'fm99999990.00'), 11, ' ') END,
                              CASE WHEN regDeuteDetall.quantitat_aplicada IS NULL THEN LPAD('NULL', 10, ' ')
                                 ELSE LPAD(TO_CHAR(regDeuteDetall.quantitat_aplicada, 'fm99999990.00'), 10, ' ') END,
+                             RPAD(TO_CHAR(regDeuteDetall.pagament_modalitat_id, 'fm9999999'), 9, ' '),   
                              CASE WHEN regDeuteDetall.data_execucio IS NULL THEN 'NULL'
                                 ELSE TO_CHAR(regDeuteDetall.data_execucio, 'DD-MM-YYYY HH24:MI:SS') END;
                 IF regDeuteDetall.quantitat IS NOT NULL THEN
