@@ -148,8 +148,34 @@ Barcelona, July 10, 2020.
     
     31/05/2021  Ordenar los registros tabla efectos por fecha de creación e Id.                         Versión 6.1
                 
-    15/06/2021  Añadir nuevo campo "pagament_modalitat_id" a la tabla "Deute Detall"                    Versión 6.1            
+    15/06/2021  Añadir nuevo campo "pagament_modalitat_id" a la tabla "Deute Detall"                    Versión 6.1
+
+    15/06/2021  Cambio de ordenación en las siguientes tablas:                                          Versión 6.2
+                    - Tabla "eco_prestacio_reserva", se ordena "id, data_reserva"
+                    - Tabla "eco_moviment", se ordena "id, data_creacio_moviment"
+                    - Tabla "eco_moviment_detall", se ordena "id, moviment_id, data_efecte_inicial"
+                    - Tabla "eco_activitat", se ordena "id, moviment_id, data_efecte_inicial"
+                    - Tabla "eco_activitat_detall", se ordena "id, activitat_id, data_efecte"
+                    - Tabla "eco_dret_teoric", se ordena "id, data_efecte"
+                    - Tabla "eco_deute", se ordena "id, data_creacio"
+                    - Tabla "eco_deute_detall", se ordena "id, deute_id, data_efecte"
+                    - Tabla "eco_percebut", se ordena "id, data_efecte"
+                    - Tabla "eco_percebut_detall", se ordena "id, data_efecte"
+                    - Tabla "eco_ordenacio_pagament", se ordena "id, nomina_mensual_id"
+                    - Tabla "eco_ordenacio_pagament_detall", se ordena "id, nomina_mensual_id"
+                    - Tabla "eco_liquidat", se ordena "id, ordenacio_pagament_id, data_efecte," 
+                      "data_periode"
+
+    15/06/2021  Cambio orden de las columnas "Imp.Anterior" y "Imp.Actual" de la                        Versión 6.2    
+                tabla "Efecte Moviment Nòmina".
                 
+    16/06/2021  Añadir campo "motiu_id" a la tabla "Activitat" para saber si se trata de una            Versión 6.2
+                actividad negociada de deuda.
+                
+                
+    
+    
+    
                 
     
     

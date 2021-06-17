@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------------------------
 --  eSocial_gPPI.sql                                                                                               --
---	Payroll Performance Information - v.6.1 release 20210419     												   --	
+--	Payroll Performance Information - v.6.2 release 20210617             										   --	
 --  						  																					   --	
 --																						   						   --	
 --  Created by Gregorio Luque Serrano.      	   								   		                           --
@@ -16,9 +16,9 @@ DECLARE
     --
     -- File identification parameters:
     --
-    prestacioId INTEGER := 629;
+    prestacioId INTEGER := NULL;
     dretId INTEGER := NULL;
-	numeroExpedient TEXT := NULL;
+	numeroExpedient TEXT := '00002/2019/168';
     --
     -- Information views:
     --
@@ -61,38 +61,54 @@ DECLARE
     -- Cursor variables:
     -------------------------------------------------------------------------------
     cur_PrestacioReserva CURSOR(p_idPrestacio INTEGER) FOR
-		SELECT * FROM eco_prestacio_reserva WHERE prestacio_id = p_idPrestacio ORDER BY data_reserva, id;    
+		SELECT * FROM eco_prestacio_reserva WHERE prestacio_id = p_idPrestacio 
+        ORDER BY id, data_reserva;    
     cur_DretReserva CURSOR(p_idDret INTEGER) FOR
-		SELECT * FROM eco_dret_reserva WHERE dret_id = p_idDret ORDER BY id;        
+		SELECT * FROM eco_dret_reserva WHERE dret_id = p_idDret 
+        ORDER BY id;        
     cur_Moviment CURSOR(p_idNomina INTEGER) FOR
-        SELECT * FROM eco_moviment WHERE id IN (SELECT DISTINCT moviment_id FROM eco_moviment_detall WHERE nomina_id = p_idNomina);    
+        SELECT * FROM eco_moviment 
+        WHERE id IN (SELECT DISTINCT moviment_id FROM eco_moviment_detall WHERE nomina_id = p_idNomina)
+        ORDER BY id, data_creacio_moviment;
     cur_Moviment_Detall CURSOR(p_idNomina INTEGER) FOR
-        SELECT * FROM eco_moviment_detall WHERE nomina_id = p_idNomina ORDER BY moviment_id, data_efecte_inicial, id;        
+        SELECT * FROM eco_moviment_detall WHERE nomina_id = p_idNomina 
+        ORDER BY id, moviment_id, data_efecte_inicial;        
     cur_EfecteMovimentNomina CURSOR(p_idDret INTEGER) FOR
-		SELECT * FROM eco_efecte_moviment_nomina WHERE dret_id = p_idDret ORDER BY id, moviment_detall_id, data_efecte_inici;    
+		SELECT * FROM eco_efecte_moviment_nomina WHERE dret_id = p_idDret 
+        ORDER BY id, moviment_detall_id, data_efecte_inici;    
     cur_Activitat CURSOR(p_idDret INTEGER) FOR
-		SELECT * FROM eco_activitat WHERE dret_id = p_idDret ORDER BY moviment_id, data_efecte_inicial, id;        
+		SELECT * FROM eco_activitat WHERE dret_id = p_idDret 
+        ORDER BY id, moviment_id, data_efecte_inicial;        
     cur_ActivitatDetall CURSOR(p_idNomina INTEGER) FOR
-		SELECT * FROM eco_activitat_detall WHERE nomina_id = p_idNomina ORDER BY data_efecte, activitat_id, id;   
+		SELECT * FROM eco_activitat_detall WHERE nomina_id = p_idNomina 
+        ORDER BY id, activitat_id, data_efecte;   
     cur_DretTeoric CURSOR(p_idDret INTEGER) FOR
-		SELECT * FROM eco_dret_teoric WHERE dret_id = p_idDret ORDER BY data_efecte, id;
+		SELECT * FROM eco_dret_teoric WHERE dret_id = p_idDret 
+        ORDER BY id, data_efecte;
     cur_DretTeoricDetall CURSOR(p_idDret INTEGER) FOR
-		SELECT * FROM eco_dret_teoric_detall WHERE dret_id = p_idDret ORDER BY data_efecte, id;                
+		SELECT * FROM eco_dret_teoric_detall WHERE dret_id = p_idDret 
+        ORDER BY data_efecte, id;
     cur_Deute CURSOR(p_idNomina INTEGER) FOR
-		SELECT * FROM eco_deute WHERE nomina_id = p_idNomina ORDER BY data_creacio, id;        
+		SELECT * FROM eco_deute WHERE nomina_id = p_idNomina 
+        ORDER BY id, data_creacio;  
     cur_DeuteDetall CURSOR(p_idNomina INTEGER) FOR
-		SELECT * FROM eco_deute_detall WHERE nomina_id = p_idNomina ORDER BY data_efecte, id;                
+		SELECT * FROM eco_deute_detall WHERE nomina_id = p_idNomina 
+        ORDER BY id, deute_id, data_efecte;                
     cur_Percebut CURSOR(p_idNomina INTEGER) FOR
-		SELECT * FROM eco_percebut WHERE nomina_id = p_idNomina ORDER BY data_efecte, id;        
+		SELECT * FROM eco_percebut WHERE nomina_id = p_idNomina 
+        ORDER BY id, data_efecte;
     cur_PercebutDetall CURSOR(p_idNomina INTEGER) FOR
-		SELECT * FROM eco_percebut_detall WHERE nomina_id = p_idNomina ORDER BY data_efecte, id;
+		SELECT * FROM eco_percebut_detall WHERE nomina_id = p_idNomina 
+        ORDER BY id, data_efecte;
     cur_OrdenacioPagament CURSOR(p_idNomina INTEGER) FOR
-		SELECT * FROM eco_ordenacio_pagament WHERE nomina_id = p_idNomina ORDER BY nomina_mensual_id, id;        
+		SELECT * FROM eco_ordenacio_pagament WHERE nomina_id = p_idNomina 
+        ORDER BY id, nomina_mensual_id;
     cur_OrdenacioPagamentDetall CURSOR(p_idNomina INTEGER) FOR
-		SELECT * FROM eco_ordenacio_pagament_detall WHERE nomina_id = p_idNomina ORDER BY nomina_mensual_id, id;
+		SELECT * FROM eco_ordenacio_pagament_detall WHERE nomina_id = p_idNomina 
+        ORDER BY id, nomina_mensual_id;
     cur_Liquidat CURSOR(p_idNomina INTEGER) FOR
 		SELECT * FROM eco_liquidat WHERE ordenacio_pagament_id IN (SELECT id FROM eco_ordenacio_pagament WHERE nomina_id = p_idNomina)
-        ORDER BY ordenacio_pagament_id, data_efecte, data_periode, id;   
+        ORDER BY id, ordenacio_pagament_id, data_efecte, data_periode;   
     -------------------------------------------------------------------------------
     -- Table row type variables:
     -------------------------------------------------------------------------------
@@ -147,7 +163,7 @@ BEGIN
     -- Script header:
     -------------------------------------------------------------------------------    
     RAISE INFO '----------------------------------------------------------------------------------------------------------------------------';
-	RAISE INFO ' Script eSocial gPPI v.6.1 release 20210519';
+	RAISE INFO ' Script eSocial gPPI v.6.2 release 20210617';
     RAISE INFO '';
     RAISE INFO ' Payroll Performance Information created by gluques.';    
     RAISE INFO ' 2020-2021 - Economic eSocial Project.';
@@ -829,8 +845,8 @@ BEGIN
                 IF (mostrarNomsColumnes) THEN
                     RAISE INFO '  Efecte Moviment Nòmina:';
                     RAISE INFO '';
-                    RAISE INFO '    Id      Mov.Detall  Tipus  Data Inici           Data Fi              Imp.Anterior  Imp.Actual  Diferencial'; 
-                    RAISE INFO '    ------  ----------  -----  -------------------  -------------------  ------------  ----------  -----------';
+                    RAISE INFO '    Id      Mov.Detall  Tipus  Data Inici           Data Fi              Imp.Actual    Imp.Anterior    Diferencial'; 
+                    RAISE INFO '    ------  ----------  -----  -------------------  -------------------  ----------    ------------    -----------';
                     mostrarNomsColumnes := FALSE;
                 END IF;
                 RAISE INFO '    %  %  %  %  %  %  %  %', 
@@ -839,12 +855,12 @@ BEGIN
                              RPAD(TO_CHAR(regEfecteMovimentNomina.tipus_id, 'fm99'), 5, ' '),
                              TO_CHAR(regEfecteMovimentNomina.data_efecte_inici, 'DD-MM-YYYY HH24:MI:SS'),
                              CASE WHEN regEfecteMovimentNomina.data_efecte_fi IS NULL THEN RPAD('NULL', 19, ' ') 
-                                ELSE TO_CHAR(regEfecteMovimentNomina.data_efecte_fi, 'DD-MM-YYYY HH24:MI:SS') END,                              
-                             CASE WHEN regEfecteMovimentNomina.import_anterior IS NULL THEN LPAD('NULL', 12, ' ') 
-                                ELSE LPAD(TO_CHAR(regEfecteMovimentNomina.import_anterior, 'fm99999990.00'), 12, ' ') END,							 
-                             LPAD(TO_CHAR(regEfecteMovimentNomina.import_actual, 'fm99999990.00'), 10, ' '),
-                             CASE WHEN regEfecteMovimentNomina.diferencial IS NULL THEN LPAD('NULL', 11, ' ') 
-                                ELSE LPAD(TO_CHAR(regEfecteMovimentNomina.diferencial, 'fm99999990.00'), 11, ' ') END;
+                                ELSE TO_CHAR(regEfecteMovimentNomina.data_efecte_fi, 'DD-MM-YYYY HH24:MI:SS') END,                             
+                             LPAD(TO_CHAR(regEfecteMovimentNomina.import_actual, 'fm99999990.00'), 10, ' '),                             
+                             CASE WHEN regEfecteMovimentNomina.import_anterior IS NULL THEN LPAD('NULL', 14, ' ') 
+                                ELSE LPAD(TO_CHAR(regEfecteMovimentNomina.import_anterior, 'fm99999990.00'), 14, ' ') END,                             
+                             CASE WHEN regEfecteMovimentNomina.diferencial IS NULL THEN LPAD('NULL', 13, ' ') 
+                                ELSE LPAD(TO_CHAR(regEfecteMovimentNomina.diferencial, 'fm99999990.00'), 13, ' ') END;
                 numTotalRegistres := numTotalRegistres + 1;
             END LOOP;
             CLOSE cur_EfecteMovimentNomina;
@@ -873,11 +889,11 @@ BEGIN
                 IF (mostrarNomsColumnes) THEN
                     RAISE INFO '  Activitat:';
                     RAISE INFO '';
-                    RAISE INFO '    Id      Moviment  Data Inici           Data Fi              Quantitat  Estat  Arxivat  Modalitat  Liquidació  Rcd Crt Ts'; 
-                    RAISE INFO '    ------  --------  -------------------  -------------------  ---------  -----  -------  ---------  ----------  -------------------';
+                    RAISE INFO '    Id      Moviment  Data Inici           Data Fi              Quantitat  Estat  Arxivat  Modalitat  Motiu  Liquidació  Rcd Crt Ts'; 
+                    RAISE INFO '    ------  --------  -------------------  -------------------  ---------  -----  -------  ---------  -----  ----------  -------------------';
                     mostrarNomsColumnes := FALSE;
                 END IF;
-                RAISE INFO '    %  %  %  %  %  %  %  %  %  %', 
+                RAISE INFO '    %  %  %  %  %  %  %  %  %  %  %', 
                              RPAD(TO_CHAR(regActivitat.id, 'fm9999999'), 6, ' '), 
                              RPAD(TO_CHAR(regActivitat.moviment_id, 'fm999999'), 8, ' '),                             
                              TO_CHAR(regActivitat.data_efecte_inicial, 'DD-MM-YYYY HH24:MI:SS'),
@@ -887,8 +903,9 @@ BEGIN
                              LPAD(regActivitat.estat_activitat, 1, ' '),
                              CASE WHEN regActivitat.arxivat THEN LPAD('TRUE', 8, ' ') ELSE LPAD('FALSE', 9, ' ') END,
                              CASE WHEN regActivitat.arxivat THEN LPAD(TO_CHAR(regActivitat.pagament_modalitat_id, 'fm9999999'), 4, ' ') 
-                                ELSE LPAD(TO_CHAR(regActivitat.pagament_modalitat_id, 'fm9999999'), 3, ' ') END,                             
-                             CASE WHEN regActivitat.liquidacio THEN LPAD('TRUE', 12, ' ') ELSE LPAD('FALSE', 13, ' ') END,
+                                ELSE LPAD(TO_CHAR(regActivitat.pagament_modalitat_id, 'fm9999999'), 3, ' ') END,
+                             LPAD(TO_CHAR(regActivitat.motiu_id, 'fm9999999'), 9, ' '),
+                             CASE WHEN regActivitat.liquidacio THEN LPAD('TRUE', 8, ' ') ELSE LPAD('FALSE', 9, ' ') END,
                              CASE WHEN regActivitat.liquidacio THEN LPAD(TO_CHAR(regActivitat.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'), 25, ' ')
                                 ELSE LPAD(TO_CHAR(regActivitat.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'), 24, ' ') END;
                 numTotalRegistres := numTotalRegistres + 1;
