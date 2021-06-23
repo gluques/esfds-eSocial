@@ -23,3 +23,6 @@ Barcelona, September 10, 2020
     15/06/2021      Inicio el proyecto desde cero con el único comando "-la" que permite                Version 2.0
                     mostrar las versiones de los artefactos en los entornos de master,
                     sub_master y dev.
+                    
+    23/06/2021      Nuevo comando "-log" que permite la descarga de los ficheros de log de los          Version 2.1
+                    entornos "INT", "PRE" y "PRO".

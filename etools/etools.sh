@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# eTtools - eSocial Tools v.2.0 2020-21 release 20210615
+# eTtools - eSocial Tools v.2.1 2020-21 release 20210623
 #
 # Created by gluques
 # Barcelona, November 20, 2020.
@@ -25,6 +25,7 @@ SECOND=`date +%S`
 FG_LIGHT_BLUE_COLOR="\e[94m"
 FG_RED_COLOR="\e[31m"
 FG_YELLOW_COLOR="\e[33m"
+FG_GREEN_COLOR="\e[32m"
 # ----------------------------------------------
 # Paths
 # ----------------------------------------------
@@ -47,6 +48,19 @@ declare -a arrayArtifacts=("esocial-dynamic-blocks"
                            "eSocial-Core-Front" 
                            "portal-empleat-public-front")
 arrayArtifactsLength=${#arrayArtifacts[@]}
+# ----------------------------------------------
+# Log file servers:
+# ----------------------------------------------
+PASSWORD_LOG_SERVERS="T3mp0r@l"
+PATTERN_NAME_LOG_FILES="*empleat*$3* ."
+FILE_DIRECTORY_ARCHIVED_LOGS="archive/"
+INT_LOG_FILE_SERVER_01="sftphpvass@10.49.56.56:/serveis/log/int/esocial/jboss/esocial/"
+PRE_LOG_FILE_SERVER_01="sftphpvass@lclasjt70.cpd1pre.intranet.gencat.cat:/serveis/log/pre/esocial/jboss/esocial/"
+PRE_LOG_FILE_SERVER_02="sftphpvass@lclasjt71.cpd1pre.intranet.gencat.cat:/serveis/log/pre/esocial/jboss/esocial/"
+PRO_LOG_FILE_SERVER_01="sftphpvass@lclasjx70.cpd1.intranet.gencat.cat:/serveis/log/pro/esocial/jboss/esocial/"
+PRO_LOG_FILE_SERVER_02="sftphpvass@lclasjx71.cpd1.intranet.gencat.cat:/serveis/log/pro/esocial/jboss/esocial/"
+PRO_LOG_FILE_SERVER_03="sftphpvass@lclasjx72.cpd1.intranet.gencat.cat:/serveis/log/pro/esocial/jboss/esocial/"
+PRO_LOG_FILE_SERVER_04="sftphpvass@lclasjx73.cpd1.intranet.gencat.cat:/serveis/log/pro/esocial/jboss/esocial/"
 # ------------------------------------------------------------------------------------------
 # Functions
 # ------------------------------------------------------------------------------------------
@@ -110,14 +124,70 @@ function showVersionArtifacts() {
     done    
 }
 # ----------------------------------------------
+# Download log files
+# ----------------------------------------------
+function downloadLogFiles() {
+    echo $PASSWORD_LOG_SERVERS | clip.exe
+    if [[ $1 == "int" ]]        
+    then
+        printf "$FG_LIGHT_BLUE_COLOR%s:\n" "Download log files INT (Shift+Ins to indicate the password)"        
+        server="$INT_LOG_FILE_SERVER_01$PATTERN_NAME_LOG_FILES"
+        if [[ ${#2} == 8 ]]
+        then
+            server="$INT_LOG_FILE_SERVER_01$FILE_DIRECTORY_ARCHIVED_LOGS$PATTERN_NAME_LOG_FILES"
+        fi        
+        printf "Server path: $server\n"
+        scp $server        
+    elif [[ $1 == "pre" ]];        
+    then            
+        printf "$FG_LIGHT_BLUE_COLOR%s:\n" "Download log files PRE (Shift+Ins to indicate the password)"        
+        if [[ ${#2} == 0 ]]
+        then
+            extension="$PATTERN_NAME_LOG_FILES"
+        else
+            extension="$FILE_DIRECTORY_ARCHIVED_LOGS$PATTERN_NAME_LOG_FILES"
+        fi                
+        server="$PRE_LOG_FILE_SERVER_01$extension"        
+        printf "Server path: $server\n"
+        scp $server
+        server="$PRE_LOG_FILE_SERVER_02$extension" 
+        printf "\nServer path: $server\n"
+        scp $server        
+    else
+        printf "$FG_LIGHT_BLUE_COLOR%s:\n" "Download log files PRO (Shift+Ins to indicate the password)"
+        if [[ ${#2} == 0 ]]
+        then
+            extension="$PATTERN_NAME_LOG_FILES"
+        else
+            extension="$FILE_DIRECTORY_ARCHIVED_LOGS$PATTERN_NAME_LOG_FILES"
+        fi
+        server="$PRO_LOG_FILE_SERVER_01$extension"
+        printf "Server path: $server\n"
+        scp $server
+        server="$PRO_LOG_FILE_SERVER_02$extension"
+        printf "Server path: $server\n"
+        scp $server
+        server="$PRO_LOG_FILE_SERVER_03$extension"
+        printf "Server path: $server\n"
+        scp $server
+        server="$PRO_LOG_FILE_SERVER_04$extension"        
+        printf "Server path: $server\n"
+        scp $server
+    fi       
+}
+# ----------------------------------------------
 # Script Show Help:
 # ----------------------------------------------
 function showHelp() {    
     printf "\n$FG_LIGHT_BLUE_COLOR%s\n" " Usage: etools command"
     printf "%s\n\n" " Commands:"   
     printf "   -la enviroment\t\tDisplays the version of the artifacts available for the specified environment.\n"    
-    printf "\t\t\t\tEnviroment values: 'mas', 'sub' or 'dev'\n"    
-    printf "\n%s\n\n" " Internal constants:"
+    printf "\t\t\t\tEnviroment values: 'mas', 'sub' or 'dev'\n\n"    
+    printf "   -log enviroment [date]\tDownload the log files for the specified environment and date.\n"
+    printf "\t\t\t\tATTENTION: requires VPN client connection.\n"    
+    printf "\t\t\t\tEnviroment values: 'int', 'pre' or 'pro'\n"
+    printf "\t\t\t\tDate format: 'yyyy-mm-dd'; if not specified, the current date will be used.\n"    
+    printf "\n$FG_LIGHT_BLUE_COLOR%s\n\n" " Internal constants:"
     printf "   Path artifacts:\t\t$ROOT_FOLDER_PATH_ARTIFACTS\n"
     printf "   Path artifacts master:\t$ROOT_FOLDER_PATH_ARTIFACTS_MASTER\n"
     printf "   Path artifacts sub_master:\t$ROOT_FOLDER_PATH_ARTIFACTS_SUB_MASTER\n"
@@ -149,6 +219,31 @@ function checkParametersVersionArtifacts() {
     fi
     return $check
 }
+
+function checkParametersLogFiles() {
+    check=0
+    if [[ $1 > 1 && $1 < 4 ]]
+    then
+        if [[ $2 == "int" || $2 == "pre" || $2 == "pro" ]]
+        then 
+            length="${#3}"            
+            if [[ $length == 0 || $length == 8 ]]
+            then            
+                check=1
+            else
+                echo -e "$FG_RED_COLOR""Error: the date '$3' is not correct."
+                echo -e "$FG_YELLOW_COLOR""Try 'etools --help' for more information."
+            fi
+        else 
+            echo -e "$FG_RED_COLOR""Error: the environment '$2' is not correct."
+            echo -e "$FG_YELLOW_COLOR""Try 'etools --help' for more information."
+        fi
+    else 
+        echo -e "$FG_RED_COLOR""Error: wrong number of parameters."
+        echo -e "$FG_YELLOW_COLOR""Try 'etools --help' for more information."
+    fi
+    return $check
+}
 # ----------------------------------------------
 # Check command
 # ----------------------------------------------
@@ -163,6 +258,12 @@ function checkCommand() {
             then
                 showVersionArtifacts $3
             fi;;
+        '-log') 
+            checkParametersLogFiles $1 $3 $4
+            if [[ $? == 1 ]]
+            then
+                downloadLogFiles $3 $4
+            fi;;
     *)
         echo -e "$FG_RED_COLOR""Error: unknown command '$2'."
         echo -e "$FG_YELLOW_COLOR""Try 'etools --help' for more information."
@@ -171,7 +272,7 @@ function checkCommand() {
 # ------------------------------------------------------------------------------------------
 # Script main
 # ------------------------------------------------------------------------------------------
-echo -e "$FG_LIGHT_BLUE_COLOR""eTools v.2.0 release 20210615 by gluques";
+echo -e "$FG_LIGHT_BLUE_COLOR""eTools v.2.1 release 20210623 by gluques";
 if [[ $# > 0 ]]
 then
     checkCommand $# $@
