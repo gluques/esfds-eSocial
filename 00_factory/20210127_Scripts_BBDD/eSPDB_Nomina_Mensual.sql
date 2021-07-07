@@ -64,7 +64,10 @@ SELECT etep.id AS "T.Exp.Pres.",
        ORDER BY data_nomina DESC LIMIT 1) AS "Inici Generació",
       (SELECT lvi.descripcio FROM llistat_valors lv 
        JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
-       WHERE etep.llistat_valors_id = lv.id) AS "Descripció"
+       WHERE etep.llistat_valors_id = lv.id) AS "T.P.Descripció",
+      (SELECT lvi.descripcio FROM llistat_valors lv 
+       JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
+       WHERE etn.llistat_valors_id = lv.id) AS "T.N.Descripció"
 FROM eco_tipus_expedient_prestacio etep
  LEFT JOIN eco_tipus_prestacio etp ON etep.id = etp.tipus_expedient_prestacio_id
  LEFT JOIN eco_tipus_prestacio_tipus_nomina tptn ON etp.id = tptn.tipus_prestacio_id

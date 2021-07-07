@@ -172,7 +172,8 @@ Barcelona, July 10, 2020.
     16/06/2021  Añadir campo "motiu_id" a la tabla "Activitat" para saber si se trata de una            Versión 6.2
                 actividad negociada de deuda.
                 
-                
+    06/07/2021  Se añade la capacidad de procesar en una sola ejecución, todos los expedientes          Versión 7.0 
+                que se quiera, informando los números de expedientes de estos en un array.
     
     
     
