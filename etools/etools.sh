@@ -1,10 +1,10 @@
 ####################################################################################################################################
-# eTtools - eSocial Tools v.2.1 2020-21 release 20210623
+# eTtools - eSocial Tools v.2.2 2020-21 release 20210712
 #
 # Created by gluques
 # Barcelona, November 20, 2020.
 #
-# Last updated on 15/06/2021
+# Last updated on 07-12-2021
 #
 ####################################################################################################################################
 # ------------------------------------------------------------------------------------------
@@ -61,6 +61,11 @@ PRO_LOG_FILE_SERVER_01="sftphpvass@lclasjx70.cpd1.intranet.gencat.cat:/serveis/l
 PRO_LOG_FILE_SERVER_02="sftphpvass@lclasjx71.cpd1.intranet.gencat.cat:/serveis/log/pro/esocial/jboss/esocial/"
 PRO_LOG_FILE_SERVER_03="sftphpvass@lclasjx72.cpd1.intranet.gencat.cat:/serveis/log/pro/esocial/jboss/esocial/"
 PRO_LOG_FILE_SERVER_04="sftphpvass@lclasjx73.cpd1.intranet.gencat.cat:/serveis/log/pro/esocial/jboss/esocial/"
+# ----------------------------------------------
+# Script PRO:
+# ----------------------------------------------
+DETINATION_FILE_NAME="ESOCIAL-"
+DETINATION_FILE_EXTENSION=".sql"
 # ------------------------------------------------------------------------------------------
 # Functions
 # ------------------------------------------------------------------------------------------
@@ -176,33 +181,45 @@ function downloadLogFiles() {
     fi       
 }
 # ----------------------------------------------
-# Script Show Help:
+# Generate script for PRO
 # ----------------------------------------------
-function showHelp() {    
-    printf "\n$FG_LIGHT_BLUE_COLOR%s\n" " Usage: etools command"
-    printf "%s\n\n" " Commands:"   
-    printf "   -la enviroment\t\tDisplays the version of the artifacts available for the specified environment.\n"    
-    printf "\t\t\t\tEnviroment values: 'mas', 'sub' or 'dev'\n\n"    
-    printf "   -log enviroment [date]\tDownload the log files for the specified environment and date.\n"
-    printf "\t\t\t\tATTENTION: requires VPN client connection.\n"    
-    printf "\t\t\t\tEnviroment values: 'int', 'pre' or 'pro'\n"
-    printf "\t\t\t\tDate format: 'yyyy-mm-dd'; if not specified, the current date will be used.\n"    
-    printf "\n$FG_LIGHT_BLUE_COLOR%s\n\n" " Internal constants:"
-    printf "   Path artifacts:\t\t$ROOT_FOLDER_PATH_ARTIFACTS\n"
-    printf "   Path artifacts master:\t$ROOT_FOLDER_PATH_ARTIFACTS_MASTER\n"
-    printf "   Path artifacts sub_master:\t$ROOT_FOLDER_PATH_ARTIFACTS_SUB_MASTER\n"
-    printf "   Path artifacts development:\t$ROOT_FOLDER_PATH_ARTIFACTS_DEV\n"
-    printf "   Artifacts version file:\t$ARTIFACTS_VERSION_FILE\n"
-    printf "   List of artifacts:\n"
-    for (( i=1; i<${arrayArtifactsLength}+1; i++ ));
-    do
-        printf "   \t\t\t\t${arrayArtifacts[$i-1]}\n"
-    done
+function generateScriptPRO() {
+    printf "$FG_LIGHT_BLUE_COLOR%s\n" "Generate script for PRO."
+    data=$(date +%F)
+    destinationFile="$DETINATION_FILE_NAME$2$DETINATION_FILE_EXTENSION"
+    printf " > Creating script file %s\n" $destinationFile   
+    rm $destinationFile
+    touch $destinationFile   
+    printf " > Adding the script header\n"
+    printf "%s\n" "------------------------------------------------------------------------------------------------" >> $destinationFile
+    printf "%s\n" "-- Script: $DETINATION_FILE_NAME$2" >> $destinationFile
+    printf "%s\n" "-- Date: $data" >> $destinationFile
+    printf "%s\n" "------------------------------------------------------------------------------------------------" >> $destinationFile
+    printf "%s\n" "DO" >> $destinationFile
+    printf "\$\$\n\n" >> $destinationFile
+    printf "%s\n" "BEGIN" >> $destinationFile    
+    printf "\t%s\n\n" "SET search_path TO esocial;" >> $destinationFile
+    printf "\t%s\n\n" "RAISE NOTICE 'START Executing script in $destinationFile';" >> $destinationFile      
+    printf "\t%s\n" "IF EXISTS (SELECT 1 FROM registre_scripts WHERE script = '$DETINATION_FILE_NAME$2')" >> $destinationFile
+    printf "\t%s\n" "THEN" >> $destinationFile
+    printf "\t\t%s\n" "RAISE WARNING '¡¡¡¡¡¡¡¡¡WARNING: $destinationFile already been applied on database!!!!!!!!!!';" >> $destinationFile
+    printf "\t%s\n" "ELSE" >> $destinationFile
+    printf " > Adding sql statements\n"
+    cat $1 >> $destinationFile
+    printf " > Adding footer to the script\n"
+    printf "\t\t%s\n" "-------------------------------------------------------------------------------------------------" >> $destinationFile              
+    printf "\t\t%s\n" "INSERT INTO registre_scripts (script,descripcio) VALUES ('$DETINATION_FILE_NAME$2','Correcció dades producció');" >> $destinationFile              
+    printf "\t\t%s\n" "-------------------------------------------------------------------------------------------------" >> $destinationFile      
+    printf "\t\t%s\n" "RAISE NOTICE 'INFO: END Processing $destinationFile';" >> $destinationFile      
+    printf "\t%s\n" "END IF;" >> $destinationFile
+    printf "%s\n" "END" >> $destinationFile
+    printf "\$\$;" >> $destinationFile
+    printf " > Script finished.\n"
 }
 # ----------------------------------------------
 # Check command parameters
 # ----------------------------------------------
-function checkParametersVersionArtifacts() {    
+function checkParametersShowVersionArtifacts() {    
     check=0
     if [[ $1 > 1 && $1 < 3 ]]
     then
@@ -220,7 +237,7 @@ function checkParametersVersionArtifacts() {
     return $check
 }
 
-function checkParametersLogFiles() {
+function checkParametersDownloadEmpleatLogFiles() {
     check=0
     if [[ $1 > 1 && $1 < 4 ]]
     then
@@ -244,25 +261,79 @@ function checkParametersLogFiles() {
     fi
     return $check
 }
+
+function checkParametersGenerateScriptPRO() {
+    check=0
+    if [[ $1 == 3 ]]
+    then
+        filename=$2
+        if [ -f "$filename" ]; 
+        then
+            check=1
+        else
+            echo -e "$FG_RED_COLOR""Error: the file $filename does not exist."
+            echo -e "$FG_YELLOW_COLOR""Try 'etools --help' for more information."
+        fi        
+    else 
+        echo -e "$FG_RED_COLOR""Error: wrong number of parameters."
+        echo -e "$FG_YELLOW_COLOR""Try 'etools --help' for more information."
+    fi
+    return $check
+}
+# ----------------------------------------------
+# Script Show Help:
+# ----------------------------------------------
+function showHelp() {    
+    printf "\n$FG_LIGHT_BLUE_COLOR%s\n" " Usage: etools command"
+    printf "%s\n\n" " Commands:"   
+    printf "   -la enviroment\t\tDisplays the version of the artifacts available for the specified environment.\n"    
+    printf "\t\t\t\tenviroment: values 'mas', 'sub' or 'dev'\n\n"    
+    printf "   -log enviroment [date]\tDownload the log files for the specified environment and date.\n"    
+    printf "\t\t\t\tenviroment: values 'int', 'pre' or 'pro'\n"
+    printf "\t\t\t\tdate: format 'yyyy-mm-dd'\n" 
+    printf "\t\t\t\tATTENTION:\n"    
+    printf "\t\t\t\t\t - Requires VPN client connection.\n"
+    printf "\t\t\t\t\t - Use 'date' parameter only for files older than the current date.\n\n"    
+    printf "   -spro filename code\t\tGenerate data correction script for production environment.\n"    
+    printf "\t\t\t\tfilename: path to the file with the SQL statements to include in the script.\n"    
+    printf "\t\t\t\tcode: JIRA number that will be added to the end of the name of the generated script.\n\n"
+    printf "\n$FG_LIGHT_BLUE_COLOR%s\n\n" " Internal constants:"
+    printf "   Path artifacts:\t\t$ROOT_FOLDER_PATH_ARTIFACTS\n"
+    printf "   Path artifacts master:\t$ROOT_FOLDER_PATH_ARTIFACTS_MASTER\n"
+    printf "   Path artifacts sub_master:\t$ROOT_FOLDER_PATH_ARTIFACTS_SUB_MASTER\n"
+    printf "   Path artifacts development:\t$ROOT_FOLDER_PATH_ARTIFACTS_DEV\n"
+    printf "   Artifacts version file:\t$ARTIFACTS_VERSION_FILE\n"
+    printf "   List of artifacts:\n"
+    for (( i=1; i<${arrayArtifactsLength}+1; i++ ));
+    do
+        printf "   \t\t\t\t${arrayArtifacts[$i-1]}\n"
+    done
+}
 # ----------------------------------------------
 # Check command
 # ----------------------------------------------
 function checkCommand() {
-    #printf "Params: $1 - $2 - $3 -$4 - $5 - $6 - $7 - $8 - $9\n"
+    #printf "Params: $1 - $2 - $3 - $4 - $5 - $6 - $7 - $8 - $9\n"
     case $2 in 
         '--help') 
             showHelp;;
         '-la') 
-            checkParametersVersionArtifacts $1 $3
+            checkParametersShowVersionArtifacts $1 $3
             if [[ $? == 1 ]]
             then
                 showVersionArtifacts $3
             fi;;
         '-log') 
-            checkParametersLogFiles $1 $3 $4
+            checkParametersDownloadEmpleatLogFiles $1 $3 $4
             if [[ $? == 1 ]]
             then
-                downloadLogFiles $3 $4
+                downloadEmpleatLogFiles $3 $4
+            fi;;
+        '-spro') 
+            checkParametersGenerateScriptPRO $1 $3 $4
+            if [[ $? == 1 ]]
+            then
+                generateScriptPRO $3 $4
             fi;;
     *)
         echo -e "$FG_RED_COLOR""Error: unknown command '$2'."
@@ -272,7 +343,7 @@ function checkCommand() {
 # ------------------------------------------------------------------------------------------
 # Script main
 # ------------------------------------------------------------------------------------------
-echo -e "$FG_LIGHT_BLUE_COLOR""eTools v.2.1 release 20210623 by gluques";
+echo -e "$FG_LIGHT_BLUE_COLOR""eTools v.2.2 release 20210712 by gluques";
 if [[ $# > 0 ]]
 then
     checkCommand $# $@

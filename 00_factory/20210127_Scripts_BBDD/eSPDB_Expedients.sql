@@ -1,24 +1,24 @@
 ---------------------------------------------------------------------------------------------------------------------
 --  eSocial_DB_Quadre_Nomina.sql                                                                               
---	Recopilación de sentencias SQL asociadas a los expedientes.
+--	Recull de sentències SQL associades als expedients.
 -- 
 --  Created by Gregorio Luque Serrano.                                                                             
 --  Barcelona, January 28, 2020.                                                                                 
 --  						  																					   								    
---  Last update: 12/01/2021
+--  Last update: 08/07/2021
 ---------------------------------------------------------------------------------------------------------------------
 --
 -- INFORMACIO EXPEDIENTS
 --
---		01. TIPUS EXPEDIENT PRESTACIO
---   	02. TIPUS PRESTACIO
---      03. TIPOS PRESTACIO TIPUS NOMINA
---      04. TIPOS DE NOMINA
---      05. TIPUS EXPEDIENT PRESTACIO, TIPUS PRESTACIO, TIPUS PRESTACIO TIPUS NOMINA I TIPUS NOMINA
---		06. TOTAL NOMINAS POR TIPOS Y ESTADO
---	    07. TIPUS TIPUS PRESTACIO Y TIPUS NOMINA PER UNA PRESTACIÓ EN PARTICULAR
---      08. INFORMACION EXPEDIENTES SIN NOMINA (DATOS JSON ALTA)
---		09. INFORMACION EXPEDIENTES CON NOMINA (DATOS JSON BAJA, MODIFICACION, ETC.)
+--	[01] TIPUS EXPEDIENT PRESTACIO 
+--  [02] TIPUS PRESTACIO
+--  [03] TIPOS PRESTACIO TIPUS NOMINA
+--  [04] TIPOS DE NOMINA
+--  [05] TIPUS EXPEDIENT PRESTACIO, TIPUS PRESTACIO, TIPUS PRESTACIO TIPUS NOMINA I TIPUS NOMINA
+--	[06] TOTAL NOMINAS POR TIPOS Y ESTADO
+--	[07] TIPUS TIPUS PRESTACIO Y TIPUS NOMINA PER UNA PRESTACIÓ EN PARTICULAR [¡¡¡¡¡INCORRECTA!!!!!]
+--  [08] INFORMACION EXPEDIENTES SIN NOMINA (DATOS JSON ALTA)
+--	[09] INFORMACION EXPEDIENTES CON NOMINA (DATOS JSON BAJA, MODIFICACION, ETC.)
 --
 ---------------------------------------------------------------------------------------------------------------------
 SET SCHEMA 'esocial';

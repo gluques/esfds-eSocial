@@ -111,44 +111,7 @@ WHERE en.tipus_nomina_id = 13
 															  WHERE enmp.nomina_mensual_id = 55 
 															    AND enmp.estat = 'ORDN')) = 0
 ORDER BY en.id;
----------------------------------------------------------------------------------------------------------------
---
--- 06. PRESUPUESTOS Y RESERVAS
---
---		06.01. CONVOCATORIA, BOSSA, PARTIDA I RESERVA PARA UN EJERCICIO
---					  
----------------------------------------------------------------------------------------------------------------
---
--- [06.01] CONVOCATORIA, BOSSA, PARTIDA I RESERVA PER UN EXERCICI
---
-SELECT con.id AS "Id Convocatoria",
-		 '[' || con.tipus_expedient_id || '] ' || lvi.descripcio AS "T.Expedient",
-		 bos.id AS "Id Bossa",
-		 bos.import_total AS "Imp.Total Bossa",
-		 par.id AS "Id Partida",
-		 par.codi_partida AS "Codi Partida",
-		 par.import_total AS "Imp.Total Partida",
-		 par.ordre_consum AS "Ordre Consum",
-		 res.id AS "Id Reserva",
-		 res.codi_reserva AS "Codi Reserva",
-		 res.import_total AS "Imp.Total Reserva",
-		 res."virtual" AS "Virtual",
-		 res.data_creacio AS "D.Creació Reserva",
- 		 res.data_modificacio AS "D.Modificació Reserva"
-FROM eco_convocatoria con
-	JOIN eco_bossa_pressupostaria bos ON con.id = bos.convocatoria_id	
-	JOIN eco_tipus_expedient_prestacio tex ON con.tipus_expedient_id = tex.id
-	JOIN llistat_valors lv ON tex.llistat_valors_id = lv.id
-	JOIN llistat_valors_idioma lvi ON lv.id = lvi.llistat_valors_id
-	JOIN eco_partida_pressupostaria par ON bos.id = par.bossa_pressupostaria_id
-	JOIN eco_reserva res ON par.id = res.partida_pressupostaria_id
-WHERE bos.exercici = '2021'
-ORDER BY con.tipus_expedient_id, con.data_pagament_inici DESC, con.id;
 
---DELETE FROM eco_reserva WHERE id IN (37, 38);
---DELETE FROM eco_partida_pressupostaria WHERE id IN (37, 38);
---DELETE FROM eco_bossa_pressupostaria WHERE id = 31;
---DELETE FROM eco_convocatoria WHERE id = 31;
 
 ---------------------------------------------------------------------------------------------------------------
 --
