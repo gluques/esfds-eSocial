@@ -1,5 +1,5 @@
 ####################################################################################################################################
-# eTtools - eSocial Tools v.2.2 2020-21 release 20210712
+# eTtools - eSocial Tools v.2.3 2020-21 release 20210715
 #
 # Created by gluques
 # Barcelona, November 20, 2020.
@@ -131,7 +131,7 @@ function showVersionArtifacts() {
 # ----------------------------------------------
 # Download log files
 # ----------------------------------------------
-function downloadLogFiles() {
+function downloadEmpleatLogFiles() {
     echo $PASSWORD_LOG_SERVERS | clip.exe
     if [[ $1 == "int" ]]        
     then
@@ -207,7 +207,7 @@ function generateScriptPRO() {
     printf " > Adding sql statements\n"
     cat $1 >> $destinationFile
     printf " > Adding footer to the script\n"
-    printf "\t\t%s\n" "-------------------------------------------------------------------------------------------------" >> $destinationFile              
+    printf "\n\t\t%s\n" "-------------------------------------------------------------------------------------------------" >> $destinationFile              
     printf "\t\t%s\n" "INSERT INTO registre_scripts (script,descripcio) VALUES ('$DETINATION_FILE_NAME$2','Correcció dades producció');" >> $destinationFile              
     printf "\t\t%s\n" "-------------------------------------------------------------------------------------------------" >> $destinationFile      
     printf "\t\t%s\n" "RAISE NOTICE 'INFO: END Processing $destinationFile';" >> $destinationFile      
@@ -343,7 +343,7 @@ function checkCommand() {
 # ------------------------------------------------------------------------------------------
 # Script main
 # ------------------------------------------------------------------------------------------
-echo -e "$FG_LIGHT_BLUE_COLOR""eTools v.2.2 release 20210712 by gluques";
+echo -e "$FG_LIGHT_BLUE_COLOR""eTools v.2.3 release 20210715 by gluques";
 if [[ $# > 0 ]]
 then
     checkCommand $# $@
