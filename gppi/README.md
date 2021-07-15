@@ -175,6 +175,12 @@ Barcelona, July 10, 2020.
     06/07/2021  Se añade la capacidad de procesar en una sola ejecución, todos los expedientes          Versión 7.0 
                 que se quiera, informando los números de expedientes de estos en un array.
     
+    13/07/2021  Obtener las actividades de una nómina a partir de sus movimientos. Se ha dado           Versión 7.1
+                la circunstancia que no se mostraban actividades por no tener el derecho informado.     
+    
+    15/07/2021  Añadir campo "reserva_id" a la tabla "eco_dret_reserva".                                Versión 7.1
+    
+    15/07/2021  Añadir campo "dret_id" a la tabla "eco_activitat".                                      Versión 7.1                        
     
     
                 

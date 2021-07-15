@@ -1,6 +1,6 @@
 ---------------------------------------------------------------------------------------------------------------------
 --  eSocial_gPPI.sql                                                                                               --
---	Payroll Performance Information - v.7.0 release 20210706             										   --	
+--	Payroll Performance Information - v.7.1 release 20210715             										   --	
 --  						  																					   --	
 --																						   						   --	
 --  Created by Gregorio Luque Serrano.      	   								   		                           --
@@ -16,9 +16,9 @@ DECLARE
     --
     -- File identification parameters:
     --
-    prestacioId INTEGER := 9064;
+    prestacioId INTEGER := 13572;
     dretId INTEGER := NULL;	
-    llistaExpedient TEXT[] := NULL; --'{"00017/2020/1005","00017/2020/1030","00017/2020/1163"}';
+    llistaExpedient TEXT[] := NULL; --'{"00017/2020/1005","00017/2020/1030"}';
     --
     -- Information views:
     --
@@ -76,8 +76,9 @@ DECLARE
     cur_EfecteMovimentNomina CURSOR(p_idDret INTEGER) FOR
 		SELECT * FROM eco_efecte_moviment_nomina WHERE dret_id = p_idDret 
         ORDER BY id, moviment_detall_id, data_efecte_inici;    
-    cur_Activitat CURSOR(p_idDret INTEGER) FOR
-		SELECT * FROM eco_activitat WHERE dret_id = p_idDret 
+    cur_Activitat CURSOR(p_idDret INTEGER, p_idNomina INTEGER) FOR
+		SELECT * FROM eco_activitat WHERE dret_id = p_idDret
+        OR moviment_id IN (SELECT DISTINCT moviment_id FROM eco_moviment_detall WHERE nomina_id = p_idNomina)
         ORDER BY id, moviment_id, data_efecte_inicial;        
     cur_ActivitatDetall CURSOR(p_idNomina INTEGER) FOR
 		SELECT * FROM eco_activitat_detall WHERE nomina_id = p_idNomina 
@@ -207,7 +208,7 @@ BEGIN
         -- Script header:
         -------------------------------------------------------------------------------    
         RAISE INFO '----------------------------------------------------------------------------------------------------------------------------';
-        RAISE INFO ' Script eSocial gPPI v.7.0 release 20210706';
+        RAISE INFO ' Script eSocial gPPI v.7.1 release 20210715';
         RAISE INFO '';
         RAISE INFO ' Payroll Performance Information created by gluques.';    
         RAISE INFO ' 2020-2021 - Economic eSocial Project.';
@@ -708,11 +709,11 @@ BEGIN
                     IF (mostrarNomsColumnes) THEN
                         RAISE INFO '  Dret Reserva:';
                         RAISE INFO '';
-                        RAISE INFO '    Id      Imp.Reservat  Imp.Ordenat  Imp.Trames  Imp.Pagat  Imp.Recuperat  Imp.Restant  Rcd Crt Ts'; 
-                        RAISE INFO '    ------  ------------  -----------  ----------  ---------  -------------  -----------  -------------------';
+                        RAISE INFO '    Id      Imp.Reservat  Imp.Ordenat  Imp.Trames  Imp.Pagat  Imp.Recuperat  Imp.Restant  Rcd Crt Ts           Reserva'; 
+                        RAISE INFO '    ------  ------------  -----------  ----------  ---------  -------------  -----------  -------------------  -------';
                         mostrarNomsColumnes := FALSE;
                     END IF;
-                    RAISE INFO '    %  %  %  %  %  %  %  %', 
+                    RAISE INFO '    %  %  %  %  %  %  %  %  %', 
                                  RPAD(TO_CHAR(regDretReserva.id, 'fm9999999'), 6, ' '),                             
                                  LPAD(TO_CHAR(regDretReserva.import_reservat, 'fm99999990.00'), 12, ' '),
                                  LPAD(TO_CHAR(regDretReserva.import_ordenat, 'fm99999990.00'), 11, ' '),
@@ -720,7 +721,8 @@ BEGIN
                                  LPAD(TO_CHAR(regDretReserva.import_pagat, 'fm99999990.00'), 9, ' '),
                                  LPAD(TO_CHAR(regDretReserva.import_recuperat, 'fm99999990.00'), 13, ' '),
                                  LPAD(TO_CHAR(regDretReserva.import_restant, 'fm99999990.00'), 11, ' '),
-                                 TO_CHAR(regDretReserva.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS');
+                                 RPAD(TO_CHAR(regDretReserva.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'), 19, ' '),
+                                 LPAD(TO_CHAR(regDretReserva.reserva_id, 'fm9999999'), 2, ' ');
                     sumaTotal1 := sumaTotal1 + regDretReserva.import_reservat;
                     sumaTotal2 := sumaTotal2 + regDretReserva.import_ordenat;
                     sumaTotal3 := sumaTotal3 + regDretReserva.import_trames;
@@ -901,18 +903,18 @@ BEGIN
                 RAISE INFO '';        
                 mostrarNomsColumnes := TRUE;
                 numTotalRegistres := 0;
-                OPEN cur_Activitat(dretId);   
+                OPEN cur_Activitat(dretId, nominaId);   
                 LOOP	
                   FETCH cur_Activitat INTO regActivitat;	
                   EXIT WHEN NOT FOUND;
                     IF (mostrarNomsColumnes) THEN
                         RAISE INFO '  Activitat:';
                         RAISE INFO '';
-                        RAISE INFO '    Id      Moviment  Data Inici           Data Fi              Quantitat  Estat  Arxivat  Modalitat  Motiu  Liquidació  Rcd Crt Ts'; 
-                        RAISE INFO '    ------  --------  -------------------  -------------------  ---------  -----  -------  ---------  -----  ----------  -------------------';
+                        RAISE INFO '    Id      Moviment  Data Inici           Data Fi              Quantitat  Estat  Arxivat  Modalitat  Motiu  Liquidació  Rcd Crt Ts           Dret'; 
+                        RAISE INFO '    ------  --------  -------------------  -------------------  ---------  -----  -------  ---------  -----  ----------  -------------------  -----------';
                         mostrarNomsColumnes := FALSE;
                     END IF;
-                    RAISE INFO '    %  %  %  %  %  %  %  %  %  %  %', 
+                    RAISE INFO '    %  %  %  %  %  %  %  %  %  %  %  %', 
                                  RPAD(TO_CHAR(regActivitat.id, 'fm9999999'), 6, ' '), 
                                  RPAD(TO_CHAR(regActivitat.moviment_id, 'fm999999'), 8, ' '),                             
                                  TO_CHAR(regActivitat.data_efecte_inicial, 'DD-MM-YYYY HH24:MI:SS'),
@@ -926,7 +928,9 @@ BEGIN
                                  LPAD(TO_CHAR(regActivitat.motiu_id, 'fm9999999'), 9, ' '),
                                  CASE WHEN regActivitat.liquidacio THEN LPAD('TRUE', 8, ' ') ELSE LPAD('FALSE', 9, ' ') END,
                                  CASE WHEN regActivitat.liquidacio THEN LPAD(TO_CHAR(regActivitat.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'), 25, ' ')
-                                    ELSE LPAD(TO_CHAR(regActivitat.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'), 24, ' ') END;
+                                    ELSE LPAD(TO_CHAR(regActivitat.rcd_crt_ts, 'DD-MM-YYYY HH24:MI:SS'), 24, ' ') END,
+                                 CASE WHEN regActivitat.dret_id IS NULL THEN LPAD(TO_CHAR(regActivitat.dret_id, 'fm9999999'), 6, ' ')
+                                    ELSE LPAD(TO_CHAR(regActivitat.dret_id, 'fm9999999'), 4, ' ') END;
                     numTotalRegistres := numTotalRegistres + 1;
                 END LOOP;
                 CLOSE cur_Activitat;
